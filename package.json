@@ -4,6 +4,6 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev:backend": "pnpm --filter ./backend start:dev",
-    "dev:frontend": "pnpm --filter ./frontend dev -- --port 3001 --hostname 0.0.0.0"
+    "dev:frontend": "pnpm --filter ./frontend dev --port 3001 --hostname 0.0.0.0"
   }
 }
