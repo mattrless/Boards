@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -22,6 +27,10 @@ import type {
   BoardMemberResponseDto,
   UpdateBoardMemberRoleDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Add member to board.
@@ -83,23 +92,15 @@ export const boardMembersControllerAddMember = async (
   addMemberDto: AddMemberDto,
   options?: RequestInit,
 ): Promise<boardMembersControllerAddMemberResponse> => {
-  const res = await fetch(getBoardMembersControllerAddMemberUrl(boardId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(addMemberDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: boardMembersControllerAddMemberResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as boardMembersControllerAddMemberResponse;
+  return customFetch<boardMembersControllerAddMemberResponse>(
+    getBoardMembersControllerAddMemberUrl(boardId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(addMemberDto),
+    },
+  );
 };
 
 export const getBoardMembersControllerAddMemberMutationOptions = <
@@ -112,7 +113,7 @@ export const getBoardMembersControllerAddMemberMutationOptions = <
     { boardId: number; data: AddMemberDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof boardMembersControllerAddMember>>,
   TError,
@@ -120,13 +121,13 @@ export const getBoardMembersControllerAddMemberMutationOptions = <
   TContext
 > => {
   const mutationKey = ["boardMembersControllerAddMember"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof boardMembersControllerAddMember>>,
@@ -134,7 +135,7 @@ export const getBoardMembersControllerAddMemberMutationOptions = <
   > = (props) => {
     const { boardId, data } = props ?? {};
 
-    return boardMembersControllerAddMember(boardId, data, fetchOptions);
+    return boardMembersControllerAddMember(boardId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -152,15 +153,18 @@ export type BoardMembersControllerAddMemberMutationError = void;
 export const useBoardMembersControllerAddMember = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof boardMembersControllerAddMember>>,
-    TError,
-    { boardId: number; data: AddMemberDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof boardMembersControllerAddMember>>,
+      TError,
+      { boardId: number; data: AddMemberDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof boardMembersControllerAddMember>>,
   TError,
   { boardId: number; data: AddMemberDto },
@@ -168,6 +172,7 @@ export const useBoardMembersControllerAddMember = <
 > => {
   return useMutation(
     getBoardMembersControllerAddMemberMutationOptions(options),
+    queryClient,
   );
 };
 /**
@@ -233,24 +238,13 @@ export const boardMembersControllerRemoveMember = async (
   targetUserId: number,
   options?: RequestInit,
 ): Promise<boardMembersControllerRemoveMemberResponse> => {
-  const res = await fetch(
+  return customFetch<boardMembersControllerRemoveMemberResponse>(
     getBoardMembersControllerRemoveMemberUrl(boardId, targetUserId),
     {
       ...options,
       method: "DELETE",
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: boardMembersControllerRemoveMemberResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as boardMembersControllerRemoveMemberResponse;
 };
 
 export const getBoardMembersControllerRemoveMemberMutationOptions = <
@@ -263,7 +257,7 @@ export const getBoardMembersControllerRemoveMemberMutationOptions = <
     { boardId: number; targetUserId: number },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof boardMembersControllerRemoveMember>>,
   TError,
@@ -271,13 +265,13 @@ export const getBoardMembersControllerRemoveMemberMutationOptions = <
   TContext
 > => {
   const mutationKey = ["boardMembersControllerRemoveMember"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof boardMembersControllerRemoveMember>>,
@@ -288,7 +282,7 @@ export const getBoardMembersControllerRemoveMemberMutationOptions = <
     return boardMembersControllerRemoveMember(
       boardId,
       targetUserId,
-      fetchOptions,
+      requestOptions,
     );
   };
 
@@ -307,15 +301,18 @@ export type BoardMembersControllerRemoveMemberMutationError = void;
 export const useBoardMembersControllerRemoveMember = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof boardMembersControllerRemoveMember>>,
-    TError,
-    { boardId: number; targetUserId: number },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof boardMembersControllerRemoveMember>>,
+      TError,
+      { boardId: number; targetUserId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof boardMembersControllerRemoveMember>>,
   TError,
   { boardId: number; targetUserId: number },
@@ -323,6 +320,7 @@ export const useBoardMembersControllerRemoveMember = <
 > => {
   return useMutation(
     getBoardMembersControllerRemoveMemberMutationOptions(options),
+    queryClient,
   );
 };
 /**
@@ -389,7 +387,7 @@ export const boardMembersControllerUpdateBoardMemberRole = async (
   updateBoardMemberRoleDto: UpdateBoardMemberRoleDto,
   options?: RequestInit,
 ): Promise<boardMembersControllerUpdateBoardMemberRoleResponse> => {
-  const res = await fetch(
+  return customFetch<boardMembersControllerUpdateBoardMemberRoleResponse>(
     getBoardMembersControllerUpdateBoardMemberRoleUrl(boardId, targetUserId),
     {
       ...options,
@@ -398,17 +396,6 @@ export const boardMembersControllerUpdateBoardMemberRole = async (
       body: JSON.stringify(updateBoardMemberRoleDto),
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: boardMembersControllerUpdateBoardMemberRoleResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as boardMembersControllerUpdateBoardMemberRoleResponse;
 };
 
 export const getBoardMembersControllerUpdateBoardMemberRoleMutationOptions = <
@@ -421,7 +408,7 @@ export const getBoardMembersControllerUpdateBoardMemberRoleMutationOptions = <
     { boardId: number; targetUserId: number; data: UpdateBoardMemberRoleDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof boardMembersControllerUpdateBoardMemberRole>>,
   TError,
@@ -429,13 +416,13 @@ export const getBoardMembersControllerUpdateBoardMemberRoleMutationOptions = <
   TContext
 > => {
   const mutationKey = ["boardMembersControllerUpdateBoardMemberRole"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof boardMembersControllerUpdateBoardMemberRole>>,
@@ -447,7 +434,7 @@ export const getBoardMembersControllerUpdateBoardMemberRoleMutationOptions = <
       boardId,
       targetUserId,
       data,
-      fetchOptions,
+      requestOptions,
     );
   };
 
@@ -468,15 +455,18 @@ export type BoardMembersControllerUpdateBoardMemberRoleMutationError = void;
 export const useBoardMembersControllerUpdateBoardMemberRole = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof boardMembersControllerUpdateBoardMemberRole>>,
-    TError,
-    { boardId: number; targetUserId: number; data: UpdateBoardMemberRoleDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof boardMembersControllerUpdateBoardMemberRole>>,
+      TError,
+      { boardId: number; targetUserId: number; data: UpdateBoardMemberRoleDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof boardMembersControllerUpdateBoardMemberRole>>,
   TError,
   { boardId: number; targetUserId: number; data: UpdateBoardMemberRoleDto },
@@ -484,6 +474,7 @@ export const useBoardMembersControllerUpdateBoardMemberRole = <
 > => {
   return useMutation(
     getBoardMembersControllerUpdateBoardMemberRoleMutationOptions(options),
+    queryClient,
   );
 };
 /**
@@ -541,24 +532,13 @@ export const boardMembersControllerFindBoardMembers = async (
   boardId: number,
   options?: RequestInit,
 ): Promise<boardMembersControllerFindBoardMembersResponse> => {
-  const res = await fetch(
+  return customFetch<boardMembersControllerFindBoardMembersResponse>(
     getBoardMembersControllerFindBoardMembersUrl(boardId),
     {
       ...options,
       method: "GET",
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: boardMembersControllerFindBoardMembersResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as boardMembersControllerFindBoardMembersResponse;
 };
 
 export const getBoardMembersControllerFindBoardMembersQueryKey = (
@@ -573,15 +553,17 @@ export const getBoardMembersControllerFindBoardMembersQueryOptions = <
 >(
   boardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ??
@@ -592,7 +574,7 @@ export const getBoardMembersControllerFindBoardMembersQueryOptions = <
   > = ({ signal }) =>
     boardMembersControllerFindBoardMembers(boardId, {
       signal,
-      ...fetchOptions,
+      ...requestOptions,
     });
 
   return {
@@ -604,7 +586,7 @@ export const getBoardMembersControllerFindBoardMembersQueryOptions = <
     Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type BoardMembersControllerFindBoardMembersQueryResult = NonNullable<
@@ -612,6 +594,79 @@ export type BoardMembersControllerFindBoardMembersQueryResult = NonNullable<
 >;
 export type BoardMembersControllerFindBoardMembersQueryError = void;
 
+export function useBoardMembersControllerFindBoardMembers<
+  TData = Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+  TError = void,
+>(
+  boardId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+          TError,
+          Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useBoardMembersControllerFindBoardMembers<
+  TData = Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+  TError = void,
+>(
+  boardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+          TError,
+          Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useBoardMembersControllerFindBoardMembers<
+  TData = Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+  TError = void,
+>(
+  boardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get board members with their board role.
  */
@@ -622,22 +677,28 @@ export function useBoardMembersControllerFindBoardMembers<
 >(
   boardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof boardMembersControllerFindBoardMembers>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getBoardMembersControllerFindBoardMembersQueryOptions(
     boardId,
     options,
   );
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }

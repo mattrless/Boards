@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -11,8 +11,8 @@ services:
       - /workspace/backend/node_modules
       - /workspace/frontend/node_modules
     ports:
-      - "3000:3000"   # Backend NestJS
-      - "3001:3001"   # Frontend NextJS
+      - "3000:3000" # Backend NestJS
+      - "3001:3001" # Frontend NextJS
     depends_on:
       - postgres
     env_file:

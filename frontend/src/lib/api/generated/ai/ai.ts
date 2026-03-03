@@ -8,6 +8,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
+  QueryClient,
   UseMutationOptions,
   UseMutationResult,
 } from "@tanstack/react-query";
@@ -17,6 +18,10 @@ import type {
   GenerateDescriptionDto,
   ResponseDescriptionDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Generate a short description from a title
@@ -59,23 +64,15 @@ export const aiControllerGenerateDescription = async (
   generateDescriptionDto: GenerateDescriptionDto,
   options?: RequestInit,
 ): Promise<aiControllerGenerateDescriptionResponse> => {
-  const res = await fetch(getAiControllerGenerateDescriptionUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(generateDescriptionDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: aiControllerGenerateDescriptionResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as aiControllerGenerateDescriptionResponse;
+  return customFetch<aiControllerGenerateDescriptionResponse>(
+    getAiControllerGenerateDescriptionUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(generateDescriptionDto),
+    },
+  );
 };
 
 export const getAiControllerGenerateDescriptionMutationOptions = <
@@ -88,7 +85,7 @@ export const getAiControllerGenerateDescriptionMutationOptions = <
     { data: GenerateDescriptionDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof aiControllerGenerateDescription>>,
   TError,
@@ -96,13 +93,13 @@ export const getAiControllerGenerateDescriptionMutationOptions = <
   TContext
 > => {
   const mutationKey = ["aiControllerGenerateDescription"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof aiControllerGenerateDescription>>,
@@ -110,7 +107,7 @@ export const getAiControllerGenerateDescriptionMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return aiControllerGenerateDescription(data, fetchOptions);
+    return aiControllerGenerateDescription(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -129,15 +126,18 @@ export type AiControllerGenerateDescriptionMutationError = void;
 export const useAiControllerGenerateDescription = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof aiControllerGenerateDescription>>,
-    TError,
-    { data: GenerateDescriptionDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof aiControllerGenerateDescription>>,
+      TError,
+      { data: GenerateDescriptionDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof aiControllerGenerateDescription>>,
   TError,
   { data: GenerateDescriptionDto },
@@ -145,6 +145,7 @@ export const useAiControllerGenerateDescription = <
 > => {
   return useMutation(
     getAiControllerGenerateDescriptionMutationOptions(options),
+    queryClient,
   );
 };
 /**
@@ -188,23 +189,15 @@ export const aiControllerCheckGrammar = async (
   checkGrammarDto: CheckGrammarDto,
   options?: RequestInit,
 ): Promise<aiControllerCheckGrammarResponse> => {
-  const res = await fetch(getAiControllerCheckGrammarUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(checkGrammarDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: aiControllerCheckGrammarResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as aiControllerCheckGrammarResponse;
+  return customFetch<aiControllerCheckGrammarResponse>(
+    getAiControllerCheckGrammarUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(checkGrammarDto),
+    },
+  );
 };
 
 export const getAiControllerCheckGrammarMutationOptions = <
@@ -217,7 +210,7 @@ export const getAiControllerCheckGrammarMutationOptions = <
     { data: CheckGrammarDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof aiControllerCheckGrammar>>,
   TError,
@@ -225,13 +218,13 @@ export const getAiControllerCheckGrammarMutationOptions = <
   TContext
 > => {
   const mutationKey = ["aiControllerCheckGrammar"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof aiControllerCheckGrammar>>,
@@ -239,7 +232,7 @@ export const getAiControllerCheckGrammarMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return aiControllerCheckGrammar(data, fetchOptions);
+    return aiControllerCheckGrammar(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -254,22 +247,25 @@ export type AiControllerCheckGrammarMutationError = void;
 /**
  * @summary Check and correct text grammar
  */
-export const useAiControllerCheckGrammar = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof aiControllerCheckGrammar>>,
-    TError,
-    { data: CheckGrammarDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useAiControllerCheckGrammar = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof aiControllerCheckGrammar>>,
+      TError,
+      { data: CheckGrammarDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof aiControllerCheckGrammar>>,
   TError,
   { data: CheckGrammarDto },
   TContext
 > => {
-  return useMutation(getAiControllerCheckGrammarMutationOptions(options));
+  return useMutation(
+    getAiControllerCheckGrammarMutationOptions(options),
+    queryClient,
+  );
 };

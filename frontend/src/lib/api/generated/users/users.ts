@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -21,6 +26,10 @@ import type {
   UpdateUserDto,
   UserResponseDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Create a new user
@@ -56,23 +65,15 @@ export const usersControllerCreate = async (
   createUserDto: CreateUserDto,
   options?: RequestInit,
 ): Promise<usersControllerCreateResponse> => {
-  const res = await fetch(getUsersControllerCreateUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createUserDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: usersControllerCreateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as usersControllerCreateResponse;
+  return customFetch<usersControllerCreateResponse>(
+    getUsersControllerCreateUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createUserDto),
+    },
+  );
 };
 
 export const getUsersControllerCreateMutationOptions = <
@@ -85,7 +86,7 @@ export const getUsersControllerCreateMutationOptions = <
     { data: CreateUserDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof usersControllerCreate>>,
   TError,
@@ -93,13 +94,13 @@ export const getUsersControllerCreateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["usersControllerCreate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof usersControllerCreate>>,
@@ -107,7 +108,7 @@ export const getUsersControllerCreateMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return usersControllerCreate(data, fetchOptions);
+    return usersControllerCreate(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -122,24 +123,27 @@ export type UsersControllerCreateMutationError = void;
 /**
  * @summary Create a new user
  */
-export const useUsersControllerCreate = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof usersControllerCreate>>,
-    TError,
-    { data: CreateUserDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useUsersControllerCreate = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof usersControllerCreate>>,
+      TError,
+      { data: CreateUserDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof usersControllerCreate>>,
   TError,
   { data: CreateUserDto },
   TContext
 > => {
-  return useMutation(getUsersControllerCreateMutationOptions(options));
+  return useMutation(
+    getUsersControllerCreateMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Retrieve all users
@@ -174,21 +178,13 @@ export const getUsersControllerFindAllUrl = () => {
 export const usersControllerFindAll = async (
   options?: RequestInit,
 ): Promise<usersControllerFindAllResponse> => {
-  const res = await fetch(getUsersControllerFindAllUrl(), {
-    ...options,
-    method: "GET",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: usersControllerFindAllResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as usersControllerFindAllResponse;
+  return customFetch<usersControllerFindAllResponse>(
+    getUsersControllerFindAllUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getUsersControllerFindAllQueryKey = () => {
@@ -199,27 +195,29 @@ export const getUsersControllerFindAllQueryOptions = <
   TData = Awaited<ReturnType<typeof usersControllerFindAll>>,
   TError = void,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof usersControllerFindAll>>,
-    TError,
-    TData
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof usersControllerFindAll>>,
+      TError,
+      TData
+    >
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ?? getUsersControllerFindAllQueryKey();
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof usersControllerFindAll>>
-  > = ({ signal }) => usersControllerFindAll({ signal, ...fetchOptions });
+  > = ({ signal }) => usersControllerFindAll({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof usersControllerFindAll>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type UsersControllerFindAllQueryResult = NonNullable<
@@ -227,6 +225,76 @@ export type UsersControllerFindAllQueryResult = NonNullable<
 >;
 export type UsersControllerFindAllQueryError = void;
 
+export function useUsersControllerFindAll<
+  TData = Awaited<ReturnType<typeof usersControllerFindAll>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindAll<
+  TData = Awaited<ReturnType<typeof usersControllerFindAll>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindAll<
+  TData = Awaited<ReturnType<typeof usersControllerFindAll>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindAll>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Retrieve all users
  */
@@ -234,141 +302,208 @@ export type UsersControllerFindAllQueryError = void;
 export function useUsersControllerFindAll<
   TData = Awaited<ReturnType<typeof usersControllerFindAll>>,
   TError = void,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof usersControllerFindAll>>,
-    TError,
-    TData
-  >;
-  fetch?: RequestInit;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindAll>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getUsersControllerFindAllQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
- * @summary Get a specific user by ID
+ * @summary Get the authenticated user profile
  */
-export type usersControllerFindOneResponse200 = {
+export type usersControllerFindMeResponse200 = {
   data: UserResponseDto;
   status: 200;
 };
 
-export type usersControllerFindOneResponse404 = {
+export type usersControllerFindMeResponse401 = {
   data: void;
-  status: 404;
+  status: 401;
 };
 
-export type usersControllerFindOneResponseSuccess =
-  usersControllerFindOneResponse200 & {
+export type usersControllerFindMeResponseSuccess =
+  usersControllerFindMeResponse200 & {
     headers: Headers;
   };
-export type usersControllerFindOneResponseError =
-  usersControllerFindOneResponse404 & {
+export type usersControllerFindMeResponseError =
+  usersControllerFindMeResponse401 & {
     headers: Headers;
   };
 
-export type usersControllerFindOneResponse =
-  | usersControllerFindOneResponseSuccess
-  | usersControllerFindOneResponseError;
+export type usersControllerFindMeResponse =
+  | usersControllerFindMeResponseSuccess
+  | usersControllerFindMeResponseError;
 
-export const getUsersControllerFindOneUrl = (id: number) => {
-  return `/users/${id}`;
+export const getUsersControllerFindMeUrl = () => {
+  return `/users/me`;
 };
 
-export const usersControllerFindOne = async (
-  id: number,
+export const usersControllerFindMe = async (
   options?: RequestInit,
-): Promise<usersControllerFindOneResponse> => {
-  const res = await fetch(getUsersControllerFindOneUrl(id), {
-    ...options,
-    method: "GET",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: usersControllerFindOneResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as usersControllerFindOneResponse;
+): Promise<usersControllerFindMeResponse> => {
+  return customFetch<usersControllerFindMeResponse>(
+    getUsersControllerFindMeUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getUsersControllerFindOneQueryKey = (id: number) => {
-  return [`/users/${id}`] as const;
+export const getUsersControllerFindMeQueryKey = () => {
+  return [`/users/me`] as const;
 };
 
-export const getUsersControllerFindOneQueryOptions = <
-  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+export const getUsersControllerFindMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof usersControllerFindMe>>,
   TError = void,
->(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof usersControllerFindOne>>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof usersControllerFindMe>>,
       TError,
       TData
-    >;
-    fetch?: RequestInit;
-  },
-) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+    >
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getUsersControllerFindOneQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getUsersControllerFindMeQueryKey();
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof usersControllerFindOne>>
-  > = ({ signal }) => usersControllerFindOne(id, { signal, ...fetchOptions });
+    Awaited<ReturnType<typeof usersControllerFindMe>>
+  > = ({ signal }) => usersControllerFindMe({ signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!id,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof usersControllerFindOne>>,
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof usersControllerFindMe>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type UsersControllerFindOneQueryResult = NonNullable<
-  Awaited<ReturnType<typeof usersControllerFindOne>>
+export type UsersControllerFindMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof usersControllerFindMe>>
 >;
-export type UsersControllerFindOneQueryError = void;
+export type UsersControllerFindMeQueryError = void;
 
-/**
- * @summary Get a specific user by ID
- */
-
-export function useUsersControllerFindOne<
-  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+export function useUsersControllerFindMe<
+  TData = Awaited<ReturnType<typeof usersControllerFindMe>>,
   TError = void,
 >(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof usersControllerFindOne>>,
-      TError,
-      TData
-    >;
-    fetch?: RequestInit;
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindMe>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindMe>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindMe>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getUsersControllerFindOneQueryOptions(id, options);
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindMe<
+  TData = Awaited<ReturnType<typeof usersControllerFindMe>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindMe>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindMe>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindMe>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindMe<
+  TData = Awaited<ReturnType<typeof usersControllerFindMe>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindMe>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get the authenticated user profile
+ */
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+export function useUsersControllerFindMe<
+  TData = Awaited<ReturnType<typeof usersControllerFindMe>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindMe>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUsersControllerFindMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -407,23 +542,15 @@ export const usersControllerUpdateMe = async (
   updateUserDto: UpdateUserDto,
   options?: RequestInit,
 ): Promise<usersControllerUpdateMeResponse> => {
-  const res = await fetch(getUsersControllerUpdateMeUrl(), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateUserDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: usersControllerUpdateMeResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as usersControllerUpdateMeResponse;
+  return customFetch<usersControllerUpdateMeResponse>(
+    getUsersControllerUpdateMeUrl(),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateUserDto),
+    },
+  );
 };
 
 export const getUsersControllerUpdateMeMutationOptions = <
@@ -436,7 +563,7 @@ export const getUsersControllerUpdateMeMutationOptions = <
     { data: UpdateUserDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof usersControllerUpdateMe>>,
   TError,
@@ -444,13 +571,13 @@ export const getUsersControllerUpdateMeMutationOptions = <
   TContext
 > => {
   const mutationKey = ["usersControllerUpdateMe"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof usersControllerUpdateMe>>,
@@ -458,7 +585,7 @@ export const getUsersControllerUpdateMeMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return usersControllerUpdateMe(data, fetchOptions);
+    return usersControllerUpdateMe(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -473,24 +600,27 @@ export type UsersControllerUpdateMeMutationError = void;
 /**
  * @summary Update the authenticated user profile
  */
-export const useUsersControllerUpdateMe = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof usersControllerUpdateMe>>,
-    TError,
-    { data: UpdateUserDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useUsersControllerUpdateMe = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof usersControllerUpdateMe>>,
+      TError,
+      { data: UpdateUserDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof usersControllerUpdateMe>>,
   TError,
   { data: UpdateUserDto },
   TContext
 > => {
-  return useMutation(getUsersControllerUpdateMeMutationOptions(options));
+  return useMutation(
+    getUsersControllerUpdateMeMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Delete the authenticated user account
@@ -532,21 +662,13 @@ export const getUsersControllerRemoveMeUrl = () => {
 export const usersControllerRemoveMe = async (
   options?: RequestInit,
 ): Promise<usersControllerRemoveMeResponse> => {
-  const res = await fetch(getUsersControllerRemoveMeUrl(), {
-    ...options,
-    method: "DELETE",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: usersControllerRemoveMeResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as usersControllerRemoveMeResponse;
+  return customFetch<usersControllerRemoveMeResponse>(
+    getUsersControllerRemoveMeUrl(),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 export const getUsersControllerRemoveMeMutationOptions = <
@@ -559,7 +681,7 @@ export const getUsersControllerRemoveMeMutationOptions = <
     void,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof usersControllerRemoveMe>>,
   TError,
@@ -567,19 +689,19 @@ export const getUsersControllerRemoveMeMutationOptions = <
   TContext
 > => {
   const mutationKey = ["usersControllerRemoveMe"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof usersControllerRemoveMe>>,
     void
   > = () => {
-    return usersControllerRemoveMe(fetchOptions);
+    return usersControllerRemoveMe(requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -594,22 +716,219 @@ export type UsersControllerRemoveMeMutationError = void;
 /**
  * @summary Delete the authenticated user account
  */
-export const useUsersControllerRemoveMe = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof usersControllerRemoveMe>>,
-    TError,
-    void,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useUsersControllerRemoveMe = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof usersControllerRemoveMe>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof usersControllerRemoveMe>>,
   TError,
   void,
   TContext
 > => {
-  return useMutation(getUsersControllerRemoveMeMutationOptions(options));
+  return useMutation(
+    getUsersControllerRemoveMeMutationOptions(options),
+    queryClient,
+  );
 };
+/**
+ * @summary Get a specific user by ID
+ */
+export type usersControllerFindOneResponse200 = {
+  data: UserResponseDto;
+  status: 200;
+};
+
+export type usersControllerFindOneResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type usersControllerFindOneResponseSuccess =
+  usersControllerFindOneResponse200 & {
+    headers: Headers;
+  };
+export type usersControllerFindOneResponseError =
+  usersControllerFindOneResponse404 & {
+    headers: Headers;
+  };
+
+export type usersControllerFindOneResponse =
+  | usersControllerFindOneResponseSuccess
+  | usersControllerFindOneResponseError;
+
+export const getUsersControllerFindOneUrl = (id: number) => {
+  return `/users/${id}`;
+};
+
+export const usersControllerFindOne = async (
+  id: number,
+  options?: RequestInit,
+): Promise<usersControllerFindOneResponse> => {
+  return customFetch<usersControllerFindOneResponse>(
+    getUsersControllerFindOneUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getUsersControllerFindOneQueryKey = (id: number) => {
+  return [`/users/${id}`] as const;
+};
+
+export const getUsersControllerFindOneQueryOptions = <
+  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+  TError = void,
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindOne>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getUsersControllerFindOneQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof usersControllerFindOne>>
+  > = ({ signal }) => usersControllerFindOne(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof usersControllerFindOne>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UsersControllerFindOneQueryResult = NonNullable<
+  Awaited<ReturnType<typeof usersControllerFindOne>>
+>;
+export type UsersControllerFindOneQueryError = void;
+
+export function useUsersControllerFindOne<
+  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+  TError = void,
+>(
+  id: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindOne<
+  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+  TError = void,
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsersControllerFindOne<
+  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+  TError = void,
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindOne>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get a specific user by ID
+ */
+
+export function useUsersControllerFindOne<
+  TData = Awaited<ReturnType<typeof usersControllerFindOne>>,
+  TError = void,
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof usersControllerFindOne>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUsersControllerFindOneQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

@@ -1,5 +1,9 @@
+"use client";
+
 import AuthForm from "@/components/auth/AuthForm";
 import { LayoutDashboard } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -7,8 +11,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useMeQuery } from "@/hooks/auth/use-me-query";
 
 export default function Home() {
+  const router = useRouter();
+  const meQuery = useMeQuery();
+
+  useEffect(() => {
+    if (meQuery.data) {
+      router.replace("/boards");
+    }
+  }, [meQuery.data, router]);
+
+  if (meQuery.isPending || meQuery.data) {
+    return (
+      <main className="min-h-screen bg-muted/30 px-4 py-8">
+        <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
+          <p className="text-sm text-muted-foreground">Checking session...</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-8">
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">

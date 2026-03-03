@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -24,6 +29,10 @@ import type {
   CreateCardDto,
   UpdateCardDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Create a new card in a list
@@ -83,23 +92,15 @@ export const cardsControllerCreate = async (
   createCardDto: CreateCardDto,
   options?: RequestInit,
 ): Promise<cardsControllerCreateResponse> => {
-  const res = await fetch(getCardsControllerCreateUrl(boardId, listId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createCardDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsControllerCreateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsControllerCreateResponse;
+  return customFetch<cardsControllerCreateResponse>(
+    getCardsControllerCreateUrl(boardId, listId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCardDto),
+    },
+  );
 };
 
 export const getCardsControllerCreateMutationOptions = <
@@ -112,7 +113,7 @@ export const getCardsControllerCreateMutationOptions = <
     { boardId: number; listId: number; data: CreateCardDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof cardsControllerCreate>>,
   TError,
@@ -120,13 +121,13 @@ export const getCardsControllerCreateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["cardsControllerCreate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof cardsControllerCreate>>,
@@ -134,7 +135,7 @@ export const getCardsControllerCreateMutationOptions = <
   > = (props) => {
     const { boardId, listId, data } = props ?? {};
 
-    return cardsControllerCreate(boardId, listId, data, fetchOptions);
+    return cardsControllerCreate(boardId, listId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -149,24 +150,27 @@ export type CardsControllerCreateMutationError = void;
 /**
  * @summary Create a new card in a list
  */
-export const useCardsControllerCreate = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof cardsControllerCreate>>,
-    TError,
-    { boardId: number; listId: number; data: CreateCardDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useCardsControllerCreate = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cardsControllerCreate>>,
+      TError,
+      { boardId: number; listId: number; data: CreateCardDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof cardsControllerCreate>>,
   TError,
   { boardId: number; listId: number; data: CreateCardDto },
   TContext
 > => {
-  return useMutation(getCardsControllerCreateMutationOptions(options));
+  return useMutation(
+    getCardsControllerCreateMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Get all cards from a list
@@ -219,21 +223,13 @@ export const cardsControllerFindAll = async (
   listId: number,
   options?: RequestInit,
 ): Promise<cardsControllerFindAllResponse> => {
-  const res = await fetch(getCardsControllerFindAllUrl(boardId, listId), {
-    ...options,
-    method: "GET",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsControllerFindAllResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsControllerFindAllResponse;
+  return customFetch<cardsControllerFindAllResponse>(
+    getCardsControllerFindAllUrl(boardId, listId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getCardsControllerFindAllQueryKey = (
@@ -250,15 +246,17 @@ export const getCardsControllerFindAllQueryOptions = <
   boardId: number,
   listId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof cardsControllerFindAll>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindAll>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ??
@@ -267,7 +265,7 @@ export const getCardsControllerFindAllQueryOptions = <
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof cardsControllerFindAll>>
   > = ({ signal }) =>
-    cardsControllerFindAll(boardId, listId, { signal, ...fetchOptions });
+    cardsControllerFindAll(boardId, listId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -278,7 +276,7 @@ export const getCardsControllerFindAllQueryOptions = <
     Awaited<ReturnType<typeof cardsControllerFindAll>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type CardsControllerFindAllQueryResult = NonNullable<
@@ -286,6 +284,82 @@ export type CardsControllerFindAllQueryResult = NonNullable<
 >;
 export type CardsControllerFindAllQueryError = void;
 
+export function useCardsControllerFindAll<
+  TData = Awaited<ReturnType<typeof cardsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof cardsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof cardsControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCardsControllerFindAll<
+  TData = Awaited<ReturnType<typeof cardsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof cardsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof cardsControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCardsControllerFindAll<
+  TData = Awaited<ReturnType<typeof cardsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindAll>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get all cards from a list
  */
@@ -297,23 +371,29 @@ export function useCardsControllerFindAll<
   boardId: number,
   listId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof cardsControllerFindAll>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindAll>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getCardsControllerFindAllQueryOptions(
     boardId,
     listId,
     options,
   );
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -371,24 +451,13 @@ export const cardsControllerFindOne = async (
   cardId: number,
   options?: RequestInit,
 ): Promise<cardsControllerFindOneResponse> => {
-  const res = await fetch(
+  return customFetch<cardsControllerFindOneResponse>(
     getCardsControllerFindOneUrl(boardId, listId, cardId),
     {
       ...options,
       method: "GET",
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsControllerFindOneResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsControllerFindOneResponse;
 };
 
 export const getCardsControllerFindOneQueryKey = (
@@ -407,15 +476,17 @@ export const getCardsControllerFindOneQueryOptions = <
   listId: number,
   cardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof cardsControllerFindOne>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindOne>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ??
@@ -426,7 +497,7 @@ export const getCardsControllerFindOneQueryOptions = <
   > = ({ signal }) =>
     cardsControllerFindOne(boardId, listId, cardId, {
       signal,
-      ...fetchOptions,
+      ...requestOptions,
     });
 
   return {
@@ -438,7 +509,7 @@ export const getCardsControllerFindOneQueryOptions = <
     Awaited<ReturnType<typeof cardsControllerFindOne>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type CardsControllerFindOneQueryResult = NonNullable<
@@ -446,6 +517,85 @@ export type CardsControllerFindOneQueryResult = NonNullable<
 >;
 export type CardsControllerFindOneQueryError = void;
 
+export function useCardsControllerFindOne<
+  TData = Awaited<ReturnType<typeof cardsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  cardId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof cardsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof cardsControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCardsControllerFindOne<
+  TData = Awaited<ReturnType<typeof cardsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  cardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof cardsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof cardsControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCardsControllerFindOne<
+  TData = Awaited<ReturnType<typeof cardsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  cardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindOne>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get one card from a list
  */
@@ -458,14 +608,19 @@ export function useCardsControllerFindOne<
   listId: number,
   cardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof cardsControllerFindOne>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof cardsControllerFindOne>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getCardsControllerFindOneQueryOptions(
     boardId,
     listId,
@@ -473,9 +628,10 @@ export function useCardsControllerFindOne<
     options,
   );
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -540,7 +696,7 @@ export const cardsControllerUpdate = async (
   updateCardDto: UpdateCardDto,
   options?: RequestInit,
 ): Promise<cardsControllerUpdateResponse> => {
-  const res = await fetch(
+  return customFetch<cardsControllerUpdateResponse>(
     getCardsControllerUpdateUrl(boardId, listId, cardId),
     {
       ...options,
@@ -549,17 +705,6 @@ export const cardsControllerUpdate = async (
       body: JSON.stringify(updateCardDto),
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsControllerUpdateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsControllerUpdateResponse;
 };
 
 export const getCardsControllerUpdateMutationOptions = <
@@ -572,7 +717,7 @@ export const getCardsControllerUpdateMutationOptions = <
     { boardId: number; listId: number; cardId: number; data: UpdateCardDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof cardsControllerUpdate>>,
   TError,
@@ -580,13 +725,13 @@ export const getCardsControllerUpdateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["cardsControllerUpdate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof cardsControllerUpdate>>,
@@ -594,7 +739,7 @@ export const getCardsControllerUpdateMutationOptions = <
   > = (props) => {
     const { boardId, listId, cardId, data } = props ?? {};
 
-    return cardsControllerUpdate(boardId, listId, cardId, data, fetchOptions);
+    return cardsControllerUpdate(boardId, listId, cardId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -609,24 +754,27 @@ export type CardsControllerUpdateMutationError = void;
 /**
  * @summary Update a card
  */
-export const useCardsControllerUpdate = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof cardsControllerUpdate>>,
-    TError,
-    { boardId: number; listId: number; cardId: number; data: UpdateCardDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useCardsControllerUpdate = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cardsControllerUpdate>>,
+      TError,
+      { boardId: number; listId: number; cardId: number; data: UpdateCardDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof cardsControllerUpdate>>,
   TError,
   { boardId: number; listId: number; cardId: number; data: UpdateCardDto },
   TContext
 > => {
-  return useMutation(getCardsControllerUpdateMutationOptions(options));
+  return useMutation(
+    getCardsControllerUpdateMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Delete a card
@@ -681,24 +829,13 @@ export const cardsControllerRemove = async (
   cardId: number,
   options?: RequestInit,
 ): Promise<cardsControllerRemoveResponse> => {
-  const res = await fetch(
+  return customFetch<cardsControllerRemoveResponse>(
     getCardsControllerRemoveUrl(boardId, listId, cardId),
     {
       ...options,
       method: "DELETE",
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsControllerRemoveResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsControllerRemoveResponse;
 };
 
 export const getCardsControllerRemoveMutationOptions = <
@@ -711,7 +848,7 @@ export const getCardsControllerRemoveMutationOptions = <
     { boardId: number; listId: number; cardId: number },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof cardsControllerRemove>>,
   TError,
@@ -719,13 +856,13 @@ export const getCardsControllerRemoveMutationOptions = <
   TContext
 > => {
   const mutationKey = ["cardsControllerRemove"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof cardsControllerRemove>>,
@@ -733,7 +870,7 @@ export const getCardsControllerRemoveMutationOptions = <
   > = (props) => {
     const { boardId, listId, cardId } = props ?? {};
 
-    return cardsControllerRemove(boardId, listId, cardId, fetchOptions);
+    return cardsControllerRemove(boardId, listId, cardId, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -748,24 +885,27 @@ export type CardsControllerRemoveMutationError = void;
 /**
  * @summary Delete a card
  */
-export const useCardsControllerRemove = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof cardsControllerRemove>>,
-    TError,
-    { boardId: number; listId: number; cardId: number },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useCardsControllerRemove = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cardsControllerRemove>>,
+      TError,
+      { boardId: number; listId: number; cardId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof cardsControllerRemove>>,
   TError,
   { boardId: number; listId: number; cardId: number },
   TContext
 > => {
-  return useMutation(getCardsControllerRemoveMutationOptions(options));
+  return useMutation(
+    getCardsControllerRemoveMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Move a card to a new position
@@ -825,7 +965,7 @@ export const cardsPositionControllerUpdatePosition = async (
   cardsPositionControllerUpdatePositionBody: CardsPositionControllerUpdatePositionBody,
   options?: RequestInit,
 ): Promise<cardsPositionControllerUpdatePositionResponse> => {
-  const res = await fetch(
+  return customFetch<cardsPositionControllerUpdatePositionResponse>(
     getCardsPositionControllerUpdatePositionUrl(boardId, cardId),
     {
       ...options,
@@ -834,17 +974,6 @@ export const cardsPositionControllerUpdatePosition = async (
       body: JSON.stringify(cardsPositionControllerUpdatePositionBody),
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: cardsPositionControllerUpdatePositionResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as cardsPositionControllerUpdatePositionResponse;
 };
 
 export const getCardsPositionControllerUpdatePositionMutationOptions = <
@@ -861,7 +990,7 @@ export const getCardsPositionControllerUpdatePositionMutationOptions = <
     },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof cardsPositionControllerUpdatePosition>>,
   TError,
@@ -873,13 +1002,13 @@ export const getCardsPositionControllerUpdatePositionMutationOptions = <
   TContext
 > => {
   const mutationKey = ["cardsPositionControllerUpdatePosition"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof cardsPositionControllerUpdatePosition>>,
@@ -895,7 +1024,7 @@ export const getCardsPositionControllerUpdatePositionMutationOptions = <
       boardId,
       cardId,
       data,
-      fetchOptions,
+      requestOptions,
     );
   };
 
@@ -915,19 +1044,22 @@ export type CardsPositionControllerUpdatePositionMutationError = void;
 export const useCardsPositionControllerUpdatePosition = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof cardsPositionControllerUpdatePosition>>,
-    TError,
-    {
-      boardId: number;
-      cardId: number;
-      data: CardsPositionControllerUpdatePositionBody;
-    },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cardsPositionControllerUpdatePosition>>,
+      TError,
+      {
+        boardId: number;
+        cardId: number;
+        data: CardsPositionControllerUpdatePositionBody;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof cardsPositionControllerUpdatePosition>>,
   TError,
   {
@@ -939,5 +1071,6 @@ export const useCardsPositionControllerUpdatePosition = <
 > => {
   return useMutation(
     getCardsPositionControllerUpdatePositionMutationOptions(options),
+    queryClient,
   );
 };

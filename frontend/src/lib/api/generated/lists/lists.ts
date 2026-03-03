@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -24,6 +29,10 @@ import type {
   ListsControllerUpdatePositionBody,
   UpdateListDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Create a new list in a board
@@ -79,23 +88,15 @@ export const listsControllerCreate = async (
   createListDto: CreateListDto,
   options?: RequestInit,
 ): Promise<listsControllerCreateResponse> => {
-  const res = await fetch(getListsControllerCreateUrl(boardId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createListDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerCreateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerCreateResponse;
+  return customFetch<listsControllerCreateResponse>(
+    getListsControllerCreateUrl(boardId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createListDto),
+    },
+  );
 };
 
 export const getListsControllerCreateMutationOptions = <
@@ -108,7 +109,7 @@ export const getListsControllerCreateMutationOptions = <
     { boardId: number; data: CreateListDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof listsControllerCreate>>,
   TError,
@@ -116,13 +117,13 @@ export const getListsControllerCreateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["listsControllerCreate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof listsControllerCreate>>,
@@ -130,7 +131,7 @@ export const getListsControllerCreateMutationOptions = <
   > = (props) => {
     const { boardId, data } = props ?? {};
 
-    return listsControllerCreate(boardId, data, fetchOptions);
+    return listsControllerCreate(boardId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -145,24 +146,27 @@ export type ListsControllerCreateMutationError = void;
 /**
  * @summary Create a new list in a board
  */
-export const useListsControllerCreate = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof listsControllerCreate>>,
-    TError,
-    { boardId: number; data: CreateListDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useListsControllerCreate = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof listsControllerCreate>>,
+      TError,
+      { boardId: number; data: CreateListDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof listsControllerCreate>>,
   TError,
   { boardId: number; data: CreateListDto },
   TContext
 > => {
-  return useMutation(getListsControllerCreateMutationOptions(options));
+  return useMutation(
+    getListsControllerCreateMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Get all lists from a board
@@ -211,21 +215,13 @@ export const listsControllerFindAll = async (
   boardId: number,
   options?: RequestInit,
 ): Promise<listsControllerFindAllResponse> => {
-  const res = await fetch(getListsControllerFindAllUrl(boardId), {
-    ...options,
-    method: "GET",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerFindAllResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerFindAllResponse;
+  return customFetch<listsControllerFindAllResponse>(
+    getListsControllerFindAllUrl(boardId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getListsControllerFindAllQueryKey = (boardId: number) => {
@@ -238,15 +234,17 @@ export const getListsControllerFindAllQueryOptions = <
 >(
   boardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listsControllerFindAll>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindAll>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ?? getListsControllerFindAllQueryKey(boardId);
@@ -254,7 +252,7 @@ export const getListsControllerFindAllQueryOptions = <
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof listsControllerFindAll>>
   > = ({ signal }) =>
-    listsControllerFindAll(boardId, { signal, ...fetchOptions });
+    listsControllerFindAll(boardId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -265,7 +263,7 @@ export const getListsControllerFindAllQueryOptions = <
     Awaited<ReturnType<typeof listsControllerFindAll>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListsControllerFindAllQueryResult = NonNullable<
@@ -273,6 +271,79 @@ export type ListsControllerFindAllQueryResult = NonNullable<
 >;
 export type ListsControllerFindAllQueryError = void;
 
+export function useListsControllerFindAll<
+  TData = Awaited<ReturnType<typeof listsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof listsControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListsControllerFindAll<
+  TData = Awaited<ReturnType<typeof listsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindAll>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof listsControllerFindAll>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListsControllerFindAll<
+  TData = Awaited<ReturnType<typeof listsControllerFindAll>>,
+  TError = void,
+>(
+  boardId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindAll>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get all lists from a board
  */
@@ -283,19 +354,25 @@ export function useListsControllerFindAll<
 >(
   boardId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listsControllerFindAll>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindAll>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getListsControllerFindAllQueryOptions(boardId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -351,21 +428,13 @@ export const listsControllerFindOne = async (
   listId: number,
   options?: RequestInit,
 ): Promise<listsControllerFindOneResponse> => {
-  const res = await fetch(getListsControllerFindOneUrl(boardId, listId), {
-    ...options,
-    method: "GET",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerFindOneResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerFindOneResponse;
+  return customFetch<listsControllerFindOneResponse>(
+    getListsControllerFindOneUrl(boardId, listId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getListsControllerFindOneQueryKey = (
@@ -382,15 +451,17 @@ export const getListsControllerFindOneQueryOptions = <
   boardId: number,
   listId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listsControllerFindOne>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindOne>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ??
@@ -399,7 +470,7 @@ export const getListsControllerFindOneQueryOptions = <
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof listsControllerFindOne>>
   > = ({ signal }) =>
-    listsControllerFindOne(boardId, listId, { signal, ...fetchOptions });
+    listsControllerFindOne(boardId, listId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -410,7 +481,7 @@ export const getListsControllerFindOneQueryOptions = <
     Awaited<ReturnType<typeof listsControllerFindOne>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListsControllerFindOneQueryResult = NonNullable<
@@ -418,6 +489,82 @@ export type ListsControllerFindOneQueryResult = NonNullable<
 >;
 export type ListsControllerFindOneQueryError = void;
 
+export function useListsControllerFindOne<
+  TData = Awaited<ReturnType<typeof listsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof listsControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListsControllerFindOne<
+  TData = Awaited<ReturnType<typeof listsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindOne>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof listsControllerFindOne>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListsControllerFindOne<
+  TData = Awaited<ReturnType<typeof listsControllerFindOne>>,
+  TError = void,
+>(
+  boardId: number,
+  listId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindOne>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Get one list from a board
  */
@@ -429,23 +576,29 @@ export function useListsControllerFindOne<
   boardId: number,
   listId: number,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listsControllerFindOne>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listsControllerFindOne>>,
+        TError,
+        TData
+      >
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getListsControllerFindOneQueryOptions(
     boardId,
     listId,
     options,
   );
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -508,23 +661,15 @@ export const listsControllerUpdate = async (
   updateListDto: UpdateListDto,
   options?: RequestInit,
 ): Promise<listsControllerUpdateResponse> => {
-  const res = await fetch(getListsControllerUpdateUrl(boardId, listId), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateListDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerUpdateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerUpdateResponse;
+  return customFetch<listsControllerUpdateResponse>(
+    getListsControllerUpdateUrl(boardId, listId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateListDto),
+    },
+  );
 };
 
 export const getListsControllerUpdateMutationOptions = <
@@ -537,7 +682,7 @@ export const getListsControllerUpdateMutationOptions = <
     { boardId: number; listId: number; data: UpdateListDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof listsControllerUpdate>>,
   TError,
@@ -545,13 +690,13 @@ export const getListsControllerUpdateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["listsControllerUpdate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof listsControllerUpdate>>,
@@ -559,7 +704,7 @@ export const getListsControllerUpdateMutationOptions = <
   > = (props) => {
     const { boardId, listId, data } = props ?? {};
 
-    return listsControllerUpdate(boardId, listId, data, fetchOptions);
+    return listsControllerUpdate(boardId, listId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -574,24 +719,27 @@ export type ListsControllerUpdateMutationError = void;
 /**
  * @summary Update a list
  */
-export const useListsControllerUpdate = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof listsControllerUpdate>>,
-    TError,
-    { boardId: number; listId: number; data: UpdateListDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useListsControllerUpdate = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof listsControllerUpdate>>,
+      TError,
+      { boardId: number; listId: number; data: UpdateListDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof listsControllerUpdate>>,
   TError,
   { boardId: number; listId: number; data: UpdateListDto },
   TContext
 > => {
-  return useMutation(getListsControllerUpdateMutationOptions(options));
+  return useMutation(
+    getListsControllerUpdateMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Delete a list
@@ -644,21 +792,13 @@ export const listsControllerRemove = async (
   listId: number,
   options?: RequestInit,
 ): Promise<listsControllerRemoveResponse> => {
-  const res = await fetch(getListsControllerRemoveUrl(boardId, listId), {
-    ...options,
-    method: "DELETE",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerRemoveResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerRemoveResponse;
+  return customFetch<listsControllerRemoveResponse>(
+    getListsControllerRemoveUrl(boardId, listId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 export const getListsControllerRemoveMutationOptions = <
@@ -671,7 +811,7 @@ export const getListsControllerRemoveMutationOptions = <
     { boardId: number; listId: number },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof listsControllerRemove>>,
   TError,
@@ -679,13 +819,13 @@ export const getListsControllerRemoveMutationOptions = <
   TContext
 > => {
   const mutationKey = ["listsControllerRemove"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof listsControllerRemove>>,
@@ -693,7 +833,7 @@ export const getListsControllerRemoveMutationOptions = <
   > = (props) => {
     const { boardId, listId } = props ?? {};
 
-    return listsControllerRemove(boardId, listId, fetchOptions);
+    return listsControllerRemove(boardId, listId, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -708,24 +848,27 @@ export type ListsControllerRemoveMutationError = void;
 /**
  * @summary Delete a list
  */
-export const useListsControllerRemove = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof listsControllerRemove>>,
-    TError,
-    { boardId: number; listId: number },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useListsControllerRemove = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof listsControllerRemove>>,
+      TError,
+      { boardId: number; listId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof listsControllerRemove>>,
   TError,
   { boardId: number; listId: number },
   TContext
 > => {
-  return useMutation(getListsControllerRemoveMutationOptions(options));
+  return useMutation(
+    getListsControllerRemoveMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Move a list to a new position
@@ -785,7 +928,7 @@ export const listsControllerUpdatePosition = async (
   listsControllerUpdatePositionBody: ListsControllerUpdatePositionBody,
   options?: RequestInit,
 ): Promise<listsControllerUpdatePositionResponse> => {
-  const res = await fetch(
+  return customFetch<listsControllerUpdatePositionResponse>(
     getListsControllerUpdatePositionUrl(boardId, listId),
     {
       ...options,
@@ -794,17 +937,6 @@ export const listsControllerUpdatePosition = async (
       body: JSON.stringify(listsControllerUpdatePositionBody),
     },
   );
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: listsControllerUpdatePositionResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as listsControllerUpdatePositionResponse;
 };
 
 export const getListsControllerUpdatePositionMutationOptions = <
@@ -821,7 +953,7 @@ export const getListsControllerUpdatePositionMutationOptions = <
     },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof listsControllerUpdatePosition>>,
   TError,
@@ -829,13 +961,13 @@ export const getListsControllerUpdatePositionMutationOptions = <
   TContext
 > => {
   const mutationKey = ["listsControllerUpdatePosition"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof listsControllerUpdatePosition>>,
@@ -843,7 +975,7 @@ export const getListsControllerUpdatePositionMutationOptions = <
   > = (props) => {
     const { boardId, listId, data } = props ?? {};
 
-    return listsControllerUpdatePosition(boardId, listId, data, fetchOptions);
+    return listsControllerUpdatePosition(boardId, listId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -862,23 +994,29 @@ export type ListsControllerUpdatePositionMutationError = void;
 export const useListsControllerUpdatePosition = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof listsControllerUpdatePosition>>,
-    TError,
-    {
-      boardId: number;
-      listId: number;
-      data: ListsControllerUpdatePositionBody;
-    },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof listsControllerUpdatePosition>>,
+      TError,
+      {
+        boardId: number;
+        listId: number;
+        data: ListsControllerUpdatePositionBody;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof listsControllerUpdatePosition>>,
   TError,
   { boardId: number; listId: number; data: ListsControllerUpdatePositionBody },
   TContext
 > => {
-  return useMutation(getListsControllerUpdatePositionMutationOptions(options));
+  return useMutation(
+    getListsControllerUpdatePositionMutationOptions(options),
+    queryClient,
+  );
 };

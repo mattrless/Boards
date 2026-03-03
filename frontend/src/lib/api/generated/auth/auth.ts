@@ -8,11 +8,16 @@
 import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
+  QueryClient,
   UseMutationOptions,
   UseMutationResult,
 } from "@tanstack/react-query";
 
 import type { LoginResponseDto, LoginUserDto } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Login with credentials.
@@ -55,23 +60,12 @@ export const authControllerLogin = async (
   loginUserDto: LoginUserDto,
   options?: RequestInit,
 ): Promise<authControllerLoginResponse> => {
-  const res = await fetch(getAuthControllerLoginUrl(), {
+  return customFetch<authControllerLoginResponse>(getAuthControllerLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(loginUserDto),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: authControllerLoginResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as authControllerLoginResponse;
 };
 
 export const getAuthControllerLoginMutationOptions = <
@@ -84,7 +78,7 @@ export const getAuthControllerLoginMutationOptions = <
     { data: LoginUserDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof authControllerLogin>>,
   TError,
@@ -92,13 +86,13 @@ export const getAuthControllerLoginMutationOptions = <
   TContext
 > => {
   const mutationKey = ["authControllerLogin"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof authControllerLogin>>,
@@ -106,7 +100,7 @@ export const getAuthControllerLoginMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return authControllerLogin(data, fetchOptions);
+    return authControllerLogin(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -121,22 +115,25 @@ export type AuthControllerLoginMutationError = void;
 /**
  * @summary Login with credentials.
  */
-export const useAuthControllerLogin = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof authControllerLogin>>,
-    TError,
-    { data: LoginUserDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+export const useAuthControllerLogin = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerLogin>>,
+      TError,
+      { data: LoginUserDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof authControllerLogin>>,
   TError,
   { data: LoginUserDto },
   TContext
 > => {
-  return useMutation(getAuthControllerLoginMutationOptions(options));
+  return useMutation(
+    getAuthControllerLoginMutationOptions(options),
+    queryClient,
+  );
 };

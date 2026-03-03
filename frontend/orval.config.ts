@@ -12,6 +12,12 @@ export default defineConfig({
       mode: "tags-split",
       target: "src/lib/api/generated",
       client: "react-query",
+      override: {
+        mutator: {
+          path: "./src/lib/api/custom-fetch.ts",
+          name: "customFetch",
+        },
+      },
       clean: true,
       prettier: true,
     },

@@ -8,6 +8,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
+  QueryClient,
   UseMutationOptions,
   UseMutationResult,
 } from "@tanstack/react-query";
@@ -17,6 +18,10 @@ import type {
   AdminUpdateUserDto,
   UserResponseDto,
 } from "../boardsAPI.schemas";
+
+import { customFetch } from "../../custom-fetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary Update any user (Admin only)
@@ -66,23 +71,15 @@ export const adminUsersControllerAdminUpdate = async (
   adminUpdateUserDto: AdminUpdateUserDto,
   options?: RequestInit,
 ): Promise<adminUsersControllerAdminUpdateResponse> => {
-  const res = await fetch(getAdminUsersControllerAdminUpdateUrl(id), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminUpdateUserDto),
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: adminUsersControllerAdminUpdateResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as adminUsersControllerAdminUpdateResponse;
+  return customFetch<adminUsersControllerAdminUpdateResponse>(
+    getAdminUsersControllerAdminUpdateUrl(id),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(adminUpdateUserDto),
+    },
+  );
 };
 
 export const getAdminUsersControllerAdminUpdateMutationOptions = <
@@ -95,7 +92,7 @@ export const getAdminUsersControllerAdminUpdateMutationOptions = <
     { id: number; data: AdminUpdateUserDto },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminUsersControllerAdminUpdate>>,
   TError,
@@ -103,13 +100,13 @@ export const getAdminUsersControllerAdminUpdateMutationOptions = <
   TContext
 > => {
   const mutationKey = ["adminUsersControllerAdminUpdate"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminUsersControllerAdminUpdate>>,
@@ -117,7 +114,7 @@ export const getAdminUsersControllerAdminUpdateMutationOptions = <
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return adminUsersControllerAdminUpdate(id, data, fetchOptions);
+    return adminUsersControllerAdminUpdate(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -135,15 +132,18 @@ export type AdminUsersControllerAdminUpdateMutationError = void;
 export const useAdminUsersControllerAdminUpdate = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof adminUsersControllerAdminUpdate>>,
-    TError,
-    { id: number; data: AdminUpdateUserDto },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerAdminUpdate>>,
+      TError,
+      { id: number; data: AdminUpdateUserDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof adminUsersControllerAdminUpdate>>,
   TError,
   { id: number; data: AdminUpdateUserDto },
@@ -151,6 +151,7 @@ export const useAdminUsersControllerAdminUpdate = <
 > => {
   return useMutation(
     getAdminUsersControllerAdminUpdateMutationOptions(options),
+    queryClient,
   );
 };
 /**
@@ -200,21 +201,13 @@ export const adminUsersControllerRemove = async (
   id: number,
   options?: RequestInit,
 ): Promise<adminUsersControllerRemoveResponse> => {
-  const res = await fetch(getAdminUsersControllerRemoveUrl(id), {
-    ...options,
-    method: "DELETE",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: adminUsersControllerRemoveResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as adminUsersControllerRemoveResponse;
+  return customFetch<adminUsersControllerRemoveResponse>(
+    getAdminUsersControllerRemoveUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 export const getAdminUsersControllerRemoveMutationOptions = <
@@ -227,7 +220,7 @@ export const getAdminUsersControllerRemoveMutationOptions = <
     { id: number },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminUsersControllerRemove>>,
   TError,
@@ -235,13 +228,13 @@ export const getAdminUsersControllerRemoveMutationOptions = <
   TContext
 > => {
   const mutationKey = ["adminUsersControllerRemove"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminUsersControllerRemove>>,
@@ -249,7 +242,7 @@ export const getAdminUsersControllerRemoveMutationOptions = <
   > = (props) => {
     const { id } = props ?? {};
 
-    return adminUsersControllerRemove(id, fetchOptions);
+    return adminUsersControllerRemove(id, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -267,21 +260,27 @@ export type AdminUsersControllerRemoveMutationError = void;
 export const useAdminUsersControllerRemove = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof adminUsersControllerRemove>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerRemove>>,
+      TError,
+      { id: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof adminUsersControllerRemove>>,
   TError,
   { id: number },
   TContext
 > => {
-  return useMutation(getAdminUsersControllerRemoveMutationOptions(options));
+  return useMutation(
+    getAdminUsersControllerRemoveMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * @summary Restore a soft-deleted user
@@ -324,21 +323,13 @@ export const adminUsersControllerRestore = async (
   id: number,
   options?: RequestInit,
 ): Promise<adminUsersControllerRestoreResponse> => {
-  const res = await fetch(getAdminUsersControllerRestoreUrl(id), {
-    ...options,
-    method: "PUT",
-  });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: adminUsersControllerRestoreResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as adminUsersControllerRestoreResponse;
+  return customFetch<adminUsersControllerRestoreResponse>(
+    getAdminUsersControllerRestoreUrl(id),
+    {
+      ...options,
+      method: "PUT",
+    },
+  );
 };
 
 export const getAdminUsersControllerRestoreMutationOptions = <
@@ -351,7 +342,7 @@ export const getAdminUsersControllerRestoreMutationOptions = <
     { id: number },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminUsersControllerRestore>>,
   TError,
@@ -359,13 +350,13 @@ export const getAdminUsersControllerRestoreMutationOptions = <
   TContext
 > => {
   const mutationKey = ["adminUsersControllerRestore"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminUsersControllerRestore>>,
@@ -373,7 +364,7 @@ export const getAdminUsersControllerRestoreMutationOptions = <
   > = (props) => {
     const { id } = props ?? {};
 
-    return adminUsersControllerRestore(id, fetchOptions);
+    return adminUsersControllerRestore(id, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -391,19 +382,25 @@ export type AdminUsersControllerRestoreMutationError = void;
 export const useAdminUsersControllerRestore = <
   TError = void,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof adminUsersControllerRestore>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminUsersControllerRestore>>,
+      TError,
+      { id: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof adminUsersControllerRestore>>,
   TError,
   { id: number },
   TContext
 > => {
-  return useMutation(getAdminUsersControllerRestoreMutationOptions(options));
+  return useMutation(
+    getAdminUsersControllerRestoreMutationOptions(options),
+    queryClient,
+  );
 };

@@ -9,10 +9,25 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Controller, useForm } from "react-hook-form";
-import loginSchema, { type LoginSchema } from "@/lib/schemas/auth/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { AuthApiError } from "@/lib/api/auth.api";
+import { useLoginMutation } from "@/hooks/auth/use-login-mutation";
+import loginSchema, { type LoginSchema } from "@/lib/schemas/auth/login.schema";
+
+function getLoginErrorMessage(error: unknown) {
+  if (error instanceof AuthApiError) return error.message;
+  return "Something went wrong. Please try again.";
+}
 
 export default function LoginForm() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const loginMutation = useLoginMutation();
+
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -22,7 +37,12 @@ export default function LoginForm() {
   });
 
   function onSubmit(data: LoginSchema) {
-    console.log(data);
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        queryClient.removeQueries({ queryKey: ["auth", "me"] });
+        router.push("/boards");
+      },
+    });
   }
 
   return (
@@ -70,9 +90,17 @@ export default function LoginForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" form="login-form">
-          Login
+        <Button
+          type="submit"
+          className="w-full"
+          form="login-form"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? "Logging in..." : "Login"}
         </Button>
+        {loginMutation.isError && (
+          <FieldError>{getLoginErrorMessage(loginMutation.error)}</FieldError>
+        )}
       </FieldGroup>
     </form>
   );
