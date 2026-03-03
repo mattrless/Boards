@@ -92,6 +92,24 @@ export class UsersService {
     });
   }
 
+  async findMe(userId: number) {
+    const user = await this.prismaService.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      include: {
+        profile: true,
+        systemRole: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("Authenticated user not found");
+    }
+
+    return plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   async updateSelf(userId: number, updateUserDto: UpdateUserDto) {
     const data: Prisma.UserUpdateInput = {
       email: updateUserDto.email,

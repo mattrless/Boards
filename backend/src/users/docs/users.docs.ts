@@ -46,6 +46,18 @@ export function ApiFindOneUserDocs() {
   );
 }
 
+export function ApiFindMeDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: "Get the authenticated user profile" }),
+    ApiOkResponse({
+      description: "Authenticated user profile returned successfully.",
+      type: UserResponseDto,
+    }),
+    ApiResponse({ status: 401, description: "Unauthorized." }),
+    ApiBearerAuth("JWT"),
+  );
+}
+
 export function ApiUpdateMeDocs() {
   return applyDecorators(
     ApiOperation({ summary: "Update the authenticated user profile" }),

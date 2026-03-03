@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000
 @userToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImlhdCI6MTc3MTYyMDg4OSwiZXhwIjoxNzcxNzkzNjg5fQ.S8LNDQouEMxCwSMSOqTGvyWpjYpSo2LHbkcDPX6rOss
-@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTQzOTU3MSwiZXhwIjoxNzcxNjEyMzcxfQ.Z9aqUzwdtepq4Q-s_EkUh6KpD_-RSrInukZB4hEz7i4
+@adminToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MjU1NTk0MywiZXhwIjoxNzcyNzI4NzQzfQ.HxucVibQKkEAwiY4WKjQV69LDjvr-H3AXMDOwKS4Lug
 @user2Token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImlhdCI6MTc3MTYxOTkxOCwiZXhwIjoxNzcxNzkyNzE4fQ.wm3cCmRoTu3VCMzlN_ZxEQ5ly_fGx9OT_tAHzBWz178
 
 ### AUTH
@@ -19,6 +19,10 @@ Content-Type: application/json
 ### Get all users
 GET {{baseUrl}}/users
 Authorization: {{userToken}}
+
+### Get my info
+GET {{baseUrl}}/users/me
+Authorization: {{adminToken}}
 
 ### Get user by id
 GET {{baseUrl}}/users/2

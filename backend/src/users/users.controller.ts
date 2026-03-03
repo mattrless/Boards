@@ -21,6 +21,7 @@ import { UserExistsPipe } from "./pipes/user-exists.pipe";
 import {
   ApiCreateUserDocs,
   ApiFindAllUsersDocs,
+  ApiFindMeDocs,
   ApiFindOneUserDocs,
   ApiRemoveMeDocs,
   ApiUpdateMeDocs,
@@ -43,6 +44,13 @@ export class UsersController {
   @ApiFindAllUsersDocs()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @UseGuards(AuthGuard("jwt"))
+  @Get("/me")
+  @ApiFindMeDocs()
+  findMe(@CurrentUser("id", UserExistsPipe) userId: number) {
+    return this.usersService.findMe(userId);
   }
 
   @UseGuards(AuthGuard("jwt"))
