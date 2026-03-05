@@ -31,7 +31,10 @@ type WsSocket = Socket<
 const AUTH_TOKEN_COOKIE_NAME = "token";
 
 @WebSocketGateway({
-  cors: { origin: "*" },
+  cors: {
+    origin: process.env.FRONTEND_URL ?? "http://localhost:3001",
+    credentials: true,
+  },
 })
 export class BoardGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect

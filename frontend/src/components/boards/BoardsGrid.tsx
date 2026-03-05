@@ -6,12 +6,15 @@ import { useBoardsControllerFindMyBoards } from "@/lib/api/generated/boards/boar
 import BoardCard from "@/components/boards/BoardCard";
 import CreateBoardCard from "@/components/boards/CreateBoardCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBoardsChangedSocket } from "@/hooks/boards/use-boards-changed-socket";
 
 type BoardsTab = "all" | "owned" | "shared";
 
 export default function BoardsGrid() {
   const [tab, setTab] = useState<BoardsTab>("all");
   const boardsQuery = useBoardsControllerFindMyBoards();
+
+  useBoardsChangedSocket();
 
   const boards = useMemo(() => {
     if (!boardsQuery.data || boardsQuery.data.status !== 200) return [];
