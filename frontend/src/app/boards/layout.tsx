@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useParams } from "next/navigation";
 
 import ProtectedLayout from "@/components/auth/ProtectedLayout";
 import WorkspaceHeader from "@/components/layout/WorkspaceHeader";
@@ -16,10 +15,13 @@ export default function BoardsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const params = useParams();
+  const isBoardDetailsRoute = /^\/boards\/[^/]+$/.test(pathname);
 
-  const boardId = Number(params.id);
-  const crumbs: Crumb[] = getCrumbs(pathname, boardId);
+  if (isBoardDetailsRoute) {
+    return <>{children}</>;
+  }
+
+  const crumbs: Crumb[] = [{ title: "Boards" }];
 
   return (
     // ProtectedLayout returns user, isLoggingOut and logout. To prevent duplication in each layout
@@ -49,22 +51,4 @@ export default function BoardsLayout({
       )}
     </ProtectedLayout>
   );
-}
-
-function getCrumbs(pathname: string, boardId: number) {
-  const crumbs: Crumb[] = [];
-
-  crumbs.push({ title: "Boards", href: "/boards" });
-
-  if (pathname === "/boards") {
-    crumbs[0] = { title: "Boards" };
-    return crumbs;
-  }
-
-  if (boardId) {
-    console.log(boardId);
-    crumbs.push({ title: `Board ${boardId}` });
-  }
-
-  return crumbs;
 }

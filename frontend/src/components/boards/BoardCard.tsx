@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import BoardNameEditorForm from "@/components/boards/BoardNameEditorForm";
 import BoardQuickActions from "@/components/boards/BoardQuickActions";
+import Link from "next/link";
 
 type BoardCardProps = {
   board: MyBoardResponseDto;
@@ -146,7 +147,7 @@ export default function BoardCard({ board }: BoardCardProps) {
           <CardContent className="mt-auto space-y-3 pt-0">
             <div className="flex items-center justify-end">
               <Button type="button" size="sm">
-                Open
+                <Link href={"/boards/" + board.id}>Open</Link>
               </Button>
             </div>
           </CardContent>

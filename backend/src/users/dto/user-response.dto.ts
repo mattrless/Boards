@@ -63,7 +63,8 @@ export class UserResponseDto {
   @ApiProperty({
     type: [String],
     example: ["user_read", "board_read", "board_create"],
-    description: "Effective permissions granted by the user's system role.",
+    description:
+      "Effective permissions granted by the user's system role and board memberships.",
   })
   @Expose()
   permissions: string[];

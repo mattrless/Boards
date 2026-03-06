@@ -30,6 +30,28 @@ const userResponseInclude = {
       },
     },
   },
+  userBoards: {
+    where: {
+      board: {
+        deletedAt: null,
+      },
+    },
+    include: {
+      boardRole: {
+        include: {
+          boardRoleBoardPermissions: {
+            include: {
+              permission: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
 } satisfies Prisma.UserInclude;
 
 type UserWithPermissions = Prisma.UserGetPayload<{
@@ -302,8 +324,16 @@ export class UsersService {
   }
 
   private toUserResponse(user: UserWithPermissions): UserResponseDto {
-    const permissions = user.systemRole.systemRoleSystemPermissions.map(
+    const systemPermissions = user.systemRole.systemRoleSystemPermissions.map(
       (rolePermission) => rolePermission.permission.name,
+    );
+    const boardPermissions = user.userBoards.flatMap((membership) =>
+      membership.boardRole.boardRoleBoardPermissions.map(
+        (boardRolePermission) => boardRolePermission.permission.name,
+      ),
+    );
+    const permissions = Array.from(
+      new Set([...systemPermissions, ...boardPermissions]),
     );
 
     return plainToInstance(
