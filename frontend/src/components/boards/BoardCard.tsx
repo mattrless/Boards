@@ -22,6 +22,7 @@ import {
 import BoardNameEditorForm from "@/components/boards/BoardNameEditorForm";
 import BoardQuickActions from "@/components/boards/BoardQuickActions";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type BoardCardProps = {
   board: MyBoardResponseDto;
@@ -109,16 +110,18 @@ export default function BoardCard({ board }: BoardCardProps) {
   }
 
   return (
-    <Card className="h-full">
+    <Card className={cn("h-full", isEditingName && "py-0")}>
       {isEditingName ? (
-        <CardContent className="space-y-3 p-6">
-          <BoardNameEditorForm
-            initialName={board.name}
-            isPending={isMutating}
-            submitError={editError}
-            onCancel={handleCancelEdit}
-            onSubmitName={handleRenameBoard}
-          />
+        <CardContent className="flex min-h-40 items-center justify-center py-4">
+          <div className="flex w-full max-w-sm flex-col gap-3">
+            <BoardNameEditorForm
+              initialName={board.name}
+              isPending={isMutating}
+              submitError={editError}
+              onCancel={handleCancelEdit}
+              onSubmitName={handleRenameBoard}
+            />
+          </div>
         </CardContent>
       ) : (
         <>

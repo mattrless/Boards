@@ -47,21 +47,25 @@ export default function BoardNameEditorForm({
   }
 
   return (
-    <form className="space-y-2" onSubmit={form.handleSubmit(onSubmit)}>
-      <FieldGroup className="gap-2">
+    <form
+      id="edit-board-name-form"
+      className="w-full"
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
+      <FieldGroup className="gap-4">
         <Controller
           name="name"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Board name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
               <Input
                 {...field}
                 id={field.name}
                 aria-invalid={fieldState.invalid}
                 maxLength={50}
                 disabled={isPending}
-                placeholder="Board name"
+                placeholder="My awesome board"
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -69,17 +73,22 @@ export default function BoardNameEditorForm({
           )}
         />
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
-            size="sm"
             variant="outline"
+            className="w-full"
             disabled={isPending}
             onClick={onCancel}
           >
             Cancel
           </Button>
-          <Button type="submit" size="sm" disabled={isPending}>
+          <Button
+            type="submit"
+            className="w-full"
+            form="edit-board-name-form"
+            disabled={isPending}
+          >
             {isPending ? "Saving..." : "Save"}
           </Button>
         </div>
