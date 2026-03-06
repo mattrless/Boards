@@ -63,8 +63,8 @@ export class BoardsController {
   }
 
   @ApiFindOneBoardDocs()
-  @UseGuards(AuthGuard("jwt"), PermissionsGuard)
-  @Permissions("board_read")
+  @UseGuards(AuthGuard("jwt"), BoardPermissionsGuard)
+  @Permissions("board_read_full_board")
   @Get(":boardId")
   findOne(@Param("boardId", ParseIntPipe, BoardExistsPipe) boardId: number) {
     return this.boardsService.findOne(boardId);

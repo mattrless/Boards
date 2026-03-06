@@ -33,6 +33,7 @@ async function main() {
       { name: "board_update", type: PermissionType.SYSTEM },
       { name: "board_restore", type: PermissionType.SYSTEM },
 
+      { name: "board_read_full_board", type: PermissionType.BOARD },
       { name: "board_add_members", type: PermissionType.BOARD },
       { name: "board_remove_members", type: PermissionType.BOARD },
       { name: "board_update_member_role", type: PermissionType.BOARD },
@@ -140,6 +141,7 @@ async function main() {
     where: {
       name: {
         in: [
+          "board_read_full_board",
           "board_add_members",
           "board_remove_members",
           "board_update_member_role",
@@ -162,6 +164,7 @@ async function main() {
     where: {
       name: {
         in: [
+          "board_read_full_board",
           "board_view_members",
           "list_read",
           "card_create",

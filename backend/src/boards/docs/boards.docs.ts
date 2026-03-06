@@ -66,6 +66,10 @@ export function ApiFindOneBoardDocs() {
       description: "Board found and returned.",
       type: BoardDetailsResponseDto,
     }),
+    ApiResponse({
+      status: 403,
+      description: "Forbidden: user is not a member of this board.",
+    }),
     ApiResponse({ status: 404, description: "Board not found." }),
     ApiBearerAuth("JWT"),
   );
