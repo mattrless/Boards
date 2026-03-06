@@ -1,12 +1,21 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Crumb } from "@/lib/types/Crumb";
 
 type WorkspaceHeaderProps = {
   userName: string;
-  title: string;
+  crumbs: Crumb[];
   isLoggingOut: boolean;
   onLogout: () => void;
   actions?: ReactNode;
@@ -14,7 +23,7 @@ type WorkspaceHeaderProps = {
 
 export default function WorkspaceHeader({
   userName,
-  title,
+  crumbs,
   isLoggingOut,
   onLogout,
   actions,
@@ -25,7 +34,38 @@ export default function WorkspaceHeader({
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {userName}'s Workspace
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+        {/* <h1 className="text-3xl font-semibold tracking-tight">{title}</h1> */}
+
+        <Breadcrumb>
+          <BreadcrumbList className="text-xl font-semibold tracking-tight text-foreground md:text-2xl lg:text-3xl">
+            {crumbs.map((c, index) => {
+              const isLast = index === crumbs.length - 1;
+              const key = `${c.title}-${c.href ?? "current"}-${index}`;
+
+              return (
+                <Fragment key={key}>
+                  <BreadcrumbItem>
+                    {c.href && !isLast ? (
+                      <BreadcrumbLink
+                        href={c.href}
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {c.title}
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage className="font-semibold text-foreground">
+                        {c.title}
+                      </BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast ? (
+                    <BreadcrumbSeparator className="text-muted-foreground/60" />
+                  ) : null}
+                </Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
       <div className="flex items-center gap-2">
         {actions}

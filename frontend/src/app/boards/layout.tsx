@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import ProtectedLayout from "@/components/auth/ProtectedLayout";
 import WorkspaceHeader from "@/components/layout/WorkspaceHeader";
 import { Button } from "@/components/ui/button";
 import { hasPermission } from "@/lib/auth/permissions";
+import { Crumb } from "@/lib/types/Crumb";
 
 export default function BoardsLayout({
   children,
@@ -14,7 +16,10 @@ export default function BoardsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const title = getBoardsTitle(pathname);
+  const params = useParams();
+
+  const boardId = Number(params.id);
+  const crumbs: Crumb[] = getCrumbs(pathname, boardId);
 
   return (
     // ProtectedLayout returns user, isLoggingOut and logout. To prevent duplication in each layout
@@ -27,7 +32,7 @@ export default function BoardsLayout({
           <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <WorkspaceHeader
               userName={user.profile.name}
-              title={title}
+              crumbs={crumbs}
               isLoggingOut={isLoggingOut}
               onLogout={logout}
               actions={
@@ -46,8 +51,20 @@ export default function BoardsLayout({
   );
 }
 
-function getBoardsTitle(pathname: string) {
-  if (pathname === "/boards") return "My Boards";
-  if (pathname.startsWith("/boards/")) return "Board Details";
-  return "Boards";
+function getCrumbs(pathname: string, boardId: number) {
+  const crumbs: Crumb[] = [];
+
+  crumbs.push({ title: "Boards", href: "/boards" });
+
+  if (pathname === "/boards") {
+    crumbs[0] = { title: "Boards" };
+    return crumbs;
+  }
+
+  if (boardId) {
+    console.log(boardId);
+    crumbs.push({ title: `Board ${boardId}` });
+  }
+
+  return crumbs;
 }
