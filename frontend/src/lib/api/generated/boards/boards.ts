@@ -529,6 +529,11 @@ export type boardsControllerFindOneResponse200 = {
   status: 200;
 };
 
+export type boardsControllerFindOneResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type boardsControllerFindOneResponse404 = {
   data: void;
   status: 404;
@@ -538,10 +543,12 @@ export type boardsControllerFindOneResponseSuccess =
   boardsControllerFindOneResponse200 & {
     headers: Headers;
   };
-export type boardsControllerFindOneResponseError =
-  boardsControllerFindOneResponse404 & {
-    headers: Headers;
-  };
+export type boardsControllerFindOneResponseError = (
+  | boardsControllerFindOneResponse403
+  | boardsControllerFindOneResponse404
+) & {
+  headers: Headers;
+};
 
 export type boardsControllerFindOneResponse =
   | boardsControllerFindOneResponseSuccess

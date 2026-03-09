@@ -66,8 +66,11 @@ export class BoardsController {
   @UseGuards(AuthGuard("jwt"), BoardPermissionsGuard)
   @Permissions("board_read_full_board")
   @Get(":boardId")
-  findOne(@Param("boardId", ParseIntPipe, BoardExistsPipe) boardId: number) {
-    return this.boardsService.findOne(boardId);
+  findOne(
+    @Param("boardId", ParseIntPipe, BoardExistsPipe) boardId: number,
+    @CurrentUser("id", UserExistsPipe) userId: number,
+  ) {
+    return this.boardsService.findOne(boardId, userId);
   }
 
   @ApiUpdateBoardDocs()

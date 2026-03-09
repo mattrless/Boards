@@ -145,7 +145,7 @@ export class BoardsService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number) {
     const board = await this.prismaService.board.findFirst({
       where: {
         id,
@@ -197,6 +197,7 @@ export class BoardsService {
 
     const boardWithDetails = {
       ...board,
+      isOwner: board.ownerId === userId,
       lists: board.lists.map((list) => ({
         ...list,
         cards: list.cards.map((card) => ({

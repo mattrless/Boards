@@ -45,7 +45,7 @@ export interface UserResponseDto {
   updatedAt: string;
   profile: ProfileResponseDto;
   systemRole: SystemRoleResponseDto;
-  /** Effective permissions granted by the user's system role. */
+  /** Effective permissions granted by the user's system role and board memberships. */
   permissions: string[];
 }
 
@@ -176,6 +176,8 @@ export interface BoardDetailsResponseDto {
   createdAt: string;
   updatedAt: string;
   owner: LoginUserResponseDto;
+  /** Indicates whether the current user is the board owner. */
+  isOwner: boolean;
   lists: BoardDetailsListResponseDto[];
 }
 

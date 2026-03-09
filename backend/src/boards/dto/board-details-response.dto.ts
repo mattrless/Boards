@@ -20,6 +20,12 @@ export class BoardDetailsListResponseDto extends ListSummaryResponseDto {
 }
 
 export class BoardDetailsResponseDto extends BoardOwnerResponseDto {
+  @ApiProperty({
+    description: "Indicates whether the current user is the board owner.",
+  })
+  @Expose()
+  isOwner: boolean;
+
   @ApiProperty({ type: () => [BoardDetailsListResponseDto] })
   @Expose()
   @Type(() => BoardDetailsListResponseDto)
