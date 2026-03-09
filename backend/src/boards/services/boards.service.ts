@@ -4,18 +4,20 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ActionResponseDto } from "src/users/dto/action-response.dto";
 import { CreateBoardDto } from "../dto/create-board.dto";
 import { BoardResponseDto } from "../dto/board-response.dto";
-import { Prisma } from "generated/prisma/client";
+import { PermissionType, Prisma } from "generated/prisma/client";
 import { BoardOwnerResponseDto } from "../dto/board-owner-response.dto";
 import { UpdateBoardDto } from "../dto/update-board.dto";
 import { BoardDetailsResponseDto } from "../dto/board-details-response.dto";
 import { BoardEventsService } from "src/websocket/services/boards-events.service";
 import { MyBoardResponseDto } from "../dto/my-board-response.dto";
+import { BoardMyPermissionsResponseDto } from "../dto/board-my-permissions-response.dto";
 
 @Injectable()
 export class BoardsService {
@@ -143,6 +145,112 @@ export class BoardsService {
     } catch {
       throw new InternalServerErrorException("Failed to fetch user boards");
     }
+  }
+
+  async findMyBoardPermissions(boardId: number, userId: number) {
+    const board = await this.prismaService.board.findFirst({
+      where: {
+        id: boardId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        ownerId: true,
+      },
+    });
+
+    if (!board) {
+      throw new NotFoundException("Board not found");
+    }
+
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      select: {
+        systemRole: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("Authenticated user not found");
+    }
+
+    const isSystemAdmin = user.systemRole.name.toLowerCase().trim() === "admin";
+
+    if (isSystemAdmin) {
+      const permissions = await this.prismaService.permission.findMany({
+        where: {
+          type: PermissionType.BOARD,
+        },
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          name: true,
+        },
+      });
+
+      return plainToInstance(
+        BoardMyPermissionsResponseDto,
+        {
+          boardId,
+          boardRole: "system_admin",
+          isOwner: board.ownerId === userId,
+          permissions: permissions.map((permission) => permission.name),
+        },
+        { excludeExtraneousValues: true },
+      );
+    }
+
+    const membership = await this.prismaService.userBoard.findFirst({
+      where: {
+        boardId,
+        userId,
+        user: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        boardRole: {
+          include: {
+            boardRoleBoardPermissions: {
+              include: {
+                permission: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException("User is not a board member");
+    }
+
+    const permissions = membership.boardRole.boardRoleBoardPermissions.map(
+      (boardRolePermission) => boardRolePermission.permission.name,
+    );
+
+    return plainToInstance(
+      BoardMyPermissionsResponseDto,
+      {
+        boardId,
+        boardRole: membership.boardRole.name,
+        isOwner: board.ownerId === userId,
+        permissions: Array.from(new Set(permissions)).sort(),
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async findOne(id: number, userId: number) {

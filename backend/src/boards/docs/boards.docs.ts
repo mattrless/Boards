@@ -12,6 +12,7 @@ import { ActionResponseDto } from "src/users/dto/action-response.dto";
 import { BoardDetailsResponseDto } from "../dto/board-details-response.dto";
 import { BoardOwnerResponseDto } from "../dto/board-owner-response.dto";
 import { MyBoardResponseDto } from "../dto/my-board-response.dto";
+import { BoardMyPermissionsResponseDto } from "../dto/board-my-permissions-response.dto";
 
 export function ApiCreateBoardDocs() {
   return applyDecorators(
@@ -69,6 +70,29 @@ export function ApiFindOneBoardDocs() {
     ApiResponse({
       status: 403,
       description: "Forbidden: user is not a member of this board.",
+    }),
+    ApiResponse({ status: 404, description: "Board not found." }),
+    ApiBearerAuth("JWT"),
+  );
+}
+
+export function ApiFindMyBoardPermissionsDocs() {
+  return applyDecorators(
+    ApiOperation({
+      summary: "Get current user effective permissions for a specific board",
+    }),
+    ApiParam({
+      name: "boardId",
+      type: Number,
+      description: "Target board id.",
+    }),
+    ApiOkResponse({
+      description: "Current user board permissions returned successfully.",
+      type: BoardMyPermissionsResponseDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: "Forbidden: user is not a board member.",
     }),
     ApiResponse({ status: 404, description: "Board not found." }),
     ApiBearerAuth("JWT"),
