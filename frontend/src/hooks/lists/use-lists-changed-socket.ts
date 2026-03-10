@@ -37,8 +37,6 @@ export function useListsChangedSocket(boardId: number) {
       socket.off("list:deleted", refresh);
       socket.off("list:updated", refresh);
       socket.off("list:moved", refresh);
-      socket.off("connect_error");
-      socket.off("disconnect");
       if (socket.connected) {
         socket.emit("board:leave", { boardId });
       }

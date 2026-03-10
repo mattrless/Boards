@@ -8,8 +8,16 @@ import { useState } from "react";
 import { useRemoveListMutation } from "@/hooks/lists/use-remove-list-mutation";
 import ListEditForm from "./ListEditForm";
 import { useUpdateListMutation } from "@/hooks/lists/use-update-list-mutation";
+import { useSortable } from "@dnd-kit/react/sortable";
+import { cn } from "@/lib/utils";
 
-export default function ListCard({ list }: { list: ListSummaryResponseDto }) {
+export default function ListCard({
+  list,
+  index,
+}: {
+  list: ListSummaryResponseDto;
+  index: number;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -35,6 +43,11 @@ export default function ListCard({ list }: { list: ListSummaryResponseDto }) {
 
   const isMutating =
     removeListMutation.isPending || updateListMutation.isPending;
+
+  const { ref, isDragging } = useSortable({
+    id: list.id,
+    index,
+  });
 
   function handleDelete() {
     removeListMutation.mutate({ boardId, listId: list.id });
@@ -65,38 +78,45 @@ export default function ListCard({ list }: { list: ListSummaryResponseDto }) {
   }
 
   return (
-    <Card className="w-72 shrink-0 self-start overflow-hidden">
-      <CardHeader>
-        {isEditing ? (
-          <ListEditForm
-            initialTitle={list.title}
-            isPending={isMutating}
-            submitError={editError}
-            onCancel={handleCancelEdit}
-            onSubmitName={handleRenameList}
-          />
-        ) : (
-          <>
-            <CardTitle className="line-clamp-1 leading-tight">
-              {list.title}
-            </CardTitle>
-            <CardAction>
-              {hasAllBoardPermissions(userBoardPermissions, [
-                "list_update",
-                "list_delete",
-              ]) ? (
-                <EntityActions
-                  entityLabel="List"
-                  entityName={list.title}
-                  disabled={isMutating}
-                  onEdit={handleStartEdit}
-                  onDelete={handleDelete}
-                />
-              ) : null}
-            </CardAction>
-          </>
+    <div ref={ref}>
+      <Card
+        className={cn(
+          "w-72 shrink-0 self-start overflow-hidden",
+          isDragging && "opacity-70",
         )}
-      </CardHeader>
-    </Card>
+      >
+        <CardHeader>
+          {isEditing ? (
+            <ListEditForm
+              initialTitle={list.title}
+              isPending={isMutating}
+              submitError={editError}
+              onCancel={handleCancelEdit}
+              onSubmitName={handleRenameList}
+            />
+          ) : (
+            <>
+              <CardTitle className="line-clamp-1 leading-tight">
+                {list.title}
+              </CardTitle>
+              <CardAction>
+                {hasAllBoardPermissions(userBoardPermissions, [
+                  "list_update",
+                  "list_delete",
+                ]) ? (
+                  <EntityActions
+                    entityLabel="List"
+                    entityName={list.title}
+                    disabled={isMutating}
+                    onEdit={handleStartEdit}
+                    onDelete={handleDelete}
+                  />
+                ) : null}
+              </CardAction>
+            </>
+          )}
+        </CardHeader>
+      </Card>
+    </div>
   );
 }

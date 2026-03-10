@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CreateListForm from "./CreateListForm";
+import { cn } from "@/lib/utils";
 
 export default function CreateBoardCard() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -20,11 +21,10 @@ export default function CreateBoardCard() {
 
   return (
     <Card
-      className={
-        isExpanded
-          ? "min-w-72 self-start overflow-hidden"
-          : "min-w-72 self-start overflow-hidden gap-0 py-0"
-      }
+      className={cn(
+        "min-w-72 self-start overflow-hidden",
+        !isExpanded && "gap-0 py-0",
+      )}
     >
       {!isExpanded ? (
         <CardContent className="p-0">
