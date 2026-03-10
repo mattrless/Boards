@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import ListCard from "./ListCard";
 import { ListSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
+import CreateListCard from "./CreateListCard";
 
 export default function ListGrid({
   lists,
@@ -12,11 +13,12 @@ export default function ListGrid({
   });
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="flex w-max gap-4">
+    <div className="w-full overflow-x-auto" data-list-grid-scroll>
+      <div className="flex w-max items-start gap-4">
         {lists.map((list) => (
           <ListCard list={list} key={list.id} />
         ))}
+        <CreateListCard />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { applyDecorators } from "@nestjs/common";
 import {
   ApiBody,
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -19,7 +20,7 @@ export function ApiCreateListDocs() {
       type: Number,
       description: "Target board id.",
     }),
-    ApiOkResponse({
+    ApiCreatedResponse({
       description: "List created successfully.",
       type: ListResponseDto,
     }),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -8,38 +8,70 @@ import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import updateListSchema, {
-  type UpdateListSchema,
-} from "@/lib/schemas/lists/update-list.schema";
+import createListSchema, {
+  CreateListSchema,
+} from "@/lib/schemas/lists/create-list.schema";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getListsControllerFindAllQueryKey,
+  useListsControllerCreate,
+} from "@/lib/api/generated/lists/lists";
+import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
+import { toast } from "sonner";
+import { getErrorMessageByStatus } from "@/lib/errors/api-error";
 
-type ListEditFormProps = {
-  initialTitle: string;
-  isPending: boolean;
-  submitError?: string | null;
-  onCancel: () => void;
-  onSubmitName: (name: string) => void;
+type CreateListFormProps = {
+  onSuccess?: () => void;
+  onCancel?: () => void;
 };
 
-export default function ListEditForm({
-  initialTitle,
-  isPending,
-  submitError,
+export default function CreateListForm({
+  onSuccess,
   onCancel,
-  onSubmitName,
-}: ListEditFormProps) {
-  const form = useForm<UpdateListSchema>({
-    resolver: zodResolver(updateListSchema),
+}: CreateListFormProps) {
+  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const createListMutation = useListsControllerCreate();
+  const boardId = useBoardIdParam();
+
+  const form = useForm<CreateListSchema>({
+    resolver: zodResolver(createListSchema),
     defaultValues: {
-      title: initialTitle,
+      title: "",
     },
   });
 
-  useEffect(() => {
-    form.reset({ title: initialTitle });
-  }, [form, initialTitle]);
-
-  function onSubmit(data: UpdateListSchema) {
-    onSubmitName(data.title);
+  function onSubmit(data: CreateListSchema) {
+    setSubmitError(null);
+    createListMutation.mutate(
+      {
+        boardId,
+        data: { title: data.title },
+      },
+      {
+        onSuccess: (res) => {
+          if (res.status === 201) {
+            queryClient.invalidateQueries({
+              queryKey: getListsControllerFindAllQueryKey(boardId),
+            });
+            form.reset();
+            toast.success("List created.");
+            onSuccess?.();
+            return;
+          }
+          setSubmitError(
+            getErrorMessageByStatus(res.status, {
+              400: "Invalid board data.",
+              403: "You do not have permission to create boards.",
+            }),
+          );
+        },
+        onError: () => {
+          setSubmitError("Something went wrong. Please try again.");
+        },
+      },
+    );
   }
 
   return (
@@ -59,7 +91,6 @@ export default function ListEditForm({
                   id={field.name}
                   aria-invalid={fieldState.invalid}
                   maxLength={50}
-                  disabled={isPending}
                   autoFocus
                   placeholder="My awesome list"
                   autoComplete="off"
@@ -74,8 +105,7 @@ export default function ListEditForm({
                   type="submit"
                   size="icon-xs"
                   variant="ghost"
-                  aria-label="Save list title"
-                  disabled={isPending}
+                  aria-label="Add new list"
                 >
                   <Check className="h-4 w-4" />
                 </Button>
@@ -83,8 +113,7 @@ export default function ListEditForm({
                   type="button"
                   size="icon-xs"
                   variant="ghost"
-                  aria-label="Cancel rename"
-                  disabled={isPending}
+                  aria-label="Cancel create list"
                   onClick={onCancel}
                 >
                   <X className="h-4 w-4" />

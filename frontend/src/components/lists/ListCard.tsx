@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardAction,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
 import { useBoardsControllerFindMyBoardPermissions } from "@/lib/api/generated/boards/boards";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
@@ -70,7 +65,7 @@ export default function ListCard({ list }: { list: ListSummaryResponseDto }) {
   }
 
   return (
-    <Card className="min-w-72">
+    <Card className="w-72 shrink-0 self-start overflow-hidden">
       <CardHeader>
         {isEditing ? (
           <ListEditForm
@@ -82,7 +77,9 @@ export default function ListCard({ list }: { list: ListSummaryResponseDto }) {
           />
         ) : (
           <>
-            <CardTitle className="line-clamp-1">{list.title}</CardTitle>
+            <CardTitle className="line-clamp-1 leading-tight">
+              {list.title}
+            </CardTitle>
             <CardAction>
               {hasAllBoardPermissions(userBoardPermissions, [
                 "list_update",
