@@ -104,8 +104,10 @@ export default function EntityActions({
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogTitle>{`Delete ${entityLabel}?`}</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are deleting "{entityName}". This action cannot be undone.
+            <AlertDialogDescription className="max-w-full whitespace-normal">
+              You are deleting{" "}
+              <span className="break-all">"{entityName}"</span>. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

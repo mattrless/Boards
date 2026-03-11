@@ -31,7 +31,7 @@ export default function CreateBoardCard() {
           <Button
             type="button"
             variant="ghost"
-            className="min-h-20 w-full justify-center gap-2 rounded-none"
+            className="min-h-17 w-full justify-center gap-2 rounded-none"
             onClick={handleOpenForm}
           >
             <Plus className="h-4 w-4" />

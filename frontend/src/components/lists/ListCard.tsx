@@ -1,5 +1,15 @@
-import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  CardSummaryResponseDto,
+  ListSummaryResponseDto,
+} from "@/lib/api/generated/boardsAPI.schemas";
 import { useBoardsControllerFindMyBoardPermissions } from "@/lib/api/generated/boards/boards";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
 import { hasAllBoardPermissions } from "@/lib/auth/board-permissions";
@@ -10,6 +20,9 @@ import ListEditForm from "./ListEditForm";
 import { useUpdateListMutation } from "@/hooks/lists/use-update-list-mutation";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { cn } from "@/lib/utils";
+import { useCardsControllerFindAll } from "@/lib/api/generated/cards/cards";
+import CardItem from "../cards/CardItem";
+import { Button } from "../ui/button";
 
 export default function ListCard({
   list,
@@ -49,6 +62,13 @@ export default function ListCard({
     index,
   });
 
+  const { data, isPending } = useCardsControllerFindAll(boardId, list.id);
+
+  if (isPending) return <div>Loading...</div>;
+  if (data?.status !== 200) return <div>Error</div>;
+
+  const cardItems: CardSummaryResponseDto[] = data?.data;
+
   function handleDelete() {
     removeListMutation.mutate({ boardId, listId: list.id });
   }
@@ -81,11 +101,11 @@ export default function ListCard({
     <div ref={ref}>
       <Card
         className={cn(
-          "w-72 shrink-0 self-start overflow-hidden",
+          "w-72 shrink-0 self-start overflow-hidden gap-0 py-4 max-h-[calc(100dvh-9rem)]",
           isDragging && "opacity-70",
         )}
       >
-        <CardHeader>
+        <CardHeader className="px-4">
           {isEditing ? (
             <ListEditForm
               initialTitle={list.title}
@@ -116,6 +136,17 @@ export default function ListCard({
             </>
           )}
         </CardHeader>
+        {cardItems.length ? (
+          <CardContent className="scrollbar-hidden px-4 flex min-h-0 flex-col gap-2 overflow-y-auto">
+            {cardItems.map((item) => (
+              <CardItem key={item.id} item={item} />
+            ))}
+          </CardContent>
+        ) : null}
+
+        {/* <CardFooter className="bg-amber-200">
+          <Button>Test</Button>
+        </CardFooter> */}
       </Card>
     </div>
   );

@@ -25,8 +25,8 @@ export default function BoardsWorkspaceLayoutShell({
       forbiddenRedirectTo="/forbidden"
     >
       {({ user, isLoggingOut, logout }) => (
-        <main className="min-h-screen bg-muted/20 p-4 md:p-6">
-          <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <main className="min-h-screen bg-muted/20 p-2 md:p-6">
+          <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <WorkspaceHeader
               userName={user.profile.name}
               crumbs={crumbs}
