@@ -23,6 +23,7 @@ import type {
 
 import type {
   ActionResponseDto,
+  CardPositionUpdatedResponseDto,
   CardResponseDto,
   CardSummaryResponseDto,
   CardsPositionControllerUpdatePositionBody,
@@ -911,7 +912,7 @@ export const useCardsControllerRemove = <TError = void, TContext = unknown>(
  * @summary Move a card to a new position
  */
 export type cardsPositionControllerUpdatePositionResponse200 = {
-  data: CardResponseDto;
+  data: CardPositionUpdatedResponseDto;
   status: 200;
 };
 

@@ -9,6 +9,7 @@ import {
   ApiCreatedResponse,
 } from "@nestjs/swagger";
 import { CardResponseDto } from "../dto/card-response.dto";
+import { CardPositionUpdatedResponseDto } from "../dto/card-position-updated-response.dto";
 import { CardSummaryResponseDto } from "../dto/card-summary-response.dto";
 import { ActionResponseDto } from "src/users/dto/action-response.dto";
 
@@ -138,7 +139,7 @@ export function ApiUpdateCardPositionDocs() {
     }),
     ApiOkResponse({
       description: "Card position updated successfully.",
-      type: CardResponseDto,
+      type: CardPositionUpdatedResponseDto,
     }),
     ApiResponse({ status: 400, description: "Invalid input data." }),
     ApiResponse({ status: 401, description: "Unauthorized." }),

@@ -15,6 +15,7 @@ import { CardSummaryResponseDto } from "../dto/card-summary-response.dto";
 import { Card, Prisma } from "generated/prisma/client";
 import { ActionResponseDto } from "src/users/dto/action-response.dto";
 import { CardsEventsService } from "src/websocket/services/cards-events.service";
+import { CardPositionUpdatedResponseDto } from "../dto/card-position-updated-response.dto";
 
 @Injectable()
 export class CardsService {
@@ -263,7 +264,7 @@ export class CardsService {
         if (!movingCard) {
           throw new NotFoundException("Card not found in this board");
         }
-
+        const sourceListId = movingCard.listId;
         const destinationListId = targetListId ?? movingCard.listId;
 
         const destinationList = await tx.list.findFirst({
@@ -403,7 +404,7 @@ export class CardsService {
           );
         }
 
-        return tx.card.update({
+        const updatedCard = await tx.card.update({
           where: {
             id: movingCard.id,
           },
@@ -422,25 +423,30 @@ export class CardsService {
             },
           },
         });
+        return { updatedCard, sourceListId };
       });
-
-      this.cardsEventsService.emitCardMoved(boardId, card.id, {
+      const { updatedCard, sourceListId } = card;
+      this.cardsEventsService.emitCardMoved(boardId, updatedCard.id, {
         boardId,
-        listId: card.list.id,
-        cardId: card.id,
+        listId: updatedCard.list.id,
+        cardId: updatedCard.id,
         data: {
-          id: card.id,
-          position: card.position,
-          targetListId: card.list.id,
+          id: updatedCard.id,
+          position: updatedCard.position,
+          targetListId: updatedCard.list.id,
           prevCardId: prevCardId ?? null,
           nextCardId: nextCardId ?? null,
         },
         timestamp: new Date().toISOString(),
       });
 
-      return plainToInstance(CardResponseDto, card, {
-        excludeExtraneousValues: true,
-      });
+      return plainToInstance(
+        CardPositionUpdatedResponseDto,
+        { ...updatedCard, sourceListId },
+        {
+          excludeExtraneousValues: true,
+        },
+      );
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

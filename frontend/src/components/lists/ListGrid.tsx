@@ -1,12 +1,18 @@
 import { DragDropProvider } from "@dnd-kit/react";
 import ListCard from "./ListCard";
-import { ListSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
+import {
+  CardSummaryResponseDto,
+  ListSummaryResponseDto,
+} from "@/lib/api/generated/boardsAPI.schemas";
 import CreateListCard from "./CreateListCard";
 import { useBoardsControllerFindMyBoardPermissions } from "@/lib/api/generated/boards/boards";
 import { hasBoardPermission } from "@/lib/auth/board-permissions";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
-import { isSortable } from "@dnd-kit/react/sortable";
 import { useUpdateListPositionMutation } from "@/hooks/lists/use-update-position-mutation";
+import { useUpdateCardPositionMutation } from "@/hooks/cards/use-update-position-mutation";
+import { getCardsControllerFindAllQueryKey } from "@/lib/api/generated/cards/cards";
+import { useQueryClient } from "@tanstack/react-query";
+import onDragEnd from "@/lib/utils/onDragEnd";
 
 export default function ListGrid({
   lists,
@@ -21,57 +27,52 @@ export default function ListGrid({
       : undefined;
 
   const userBoardPermissions = userBoardInfo?.permissions;
+  const queryClient = useQueryClient();
 
-  const updatePositionMutation = useUpdateListPositionMutation({
+  const updateListPositionMutation = useUpdateListPositionMutation({
     boardId,
   });
+  const updateCardPositionMutation = useUpdateCardPositionMutation({
+    boardId,
+  });
+
+  function getCardsInList(listId: number) {
+    const queryKey = getCardsControllerFindAllQueryKey(boardId, listId);
+    const cached = queryClient.getQueryData<{
+      status: number;
+      data: CardSummaryResponseDto[];
+    }>(queryKey);
+    return cached?.status === 200 ? cached.data : [];
+  }
 
   return (
     <DragDropProvider
       onBeforeDragStart={(event) => {
-        if (!hasBoardPermission(userBoardPermissions, "list_update")) {
+        const sourceType = event.operation.source?.type;
+
+        if (
+          sourceType === "list" &&
+          !hasBoardPermission(userBoardPermissions, "list_update")
+        ) {
+          event.preventDefault();
+        }
+
+        if (
+          sourceType === "card" &&
+          !hasBoardPermission(userBoardPermissions, "card_update")
+        ) {
           event.preventDefault();
         }
       }}
       onDragEnd={(event) => {
-        // In case the element its dropped in a no droppeable element
-        if (event.canceled) return;
-
-        const { source, target } = event.operation;
-        if (isSortable(source) && isSortable(target)) {
-          // Do nothing if is placed in the same spot
-          if (source.initialIndex === source.index) return;
-
-          const nextOrder = [...lists];
-          const sourceIndex = nextOrder.findIndex(
-            (list) => list.id === source.id,
-          );
-
-          if (sourceIndex === -1) return;
-
-          const [moved] = nextOrder.splice(sourceIndex, 1);
-          nextOrder.splice(target.index, 0, moved);
-
-          const prevId = nextOrder[target.index - 1]?.id ?? null;
-          const nextId = nextOrder[target.index + 1]?.id ?? null;
-
-          if (!prevId && !nextId) return;
-
-          let data;
-          if (prevId && nextId) {
-            data = { prevListId: prevId, nextListId: nextId };
-          } else if (prevId) {
-            data = { prevListId: prevId };
-          } else {
-            data = { nextListId: nextId };
-          }
-
-          updatePositionMutation.mutate({
-            boardId,
-            listId: Number(source.id),
-            data,
-          });
-        }
+        onDragEnd({
+          event,
+          lists,
+          boardId,
+          updateListPositionMutation,
+          updateCardPositionMutation,
+          getCardsInList,
+        });
       }}
     >
       <div className="w-full overflow-x-auto">

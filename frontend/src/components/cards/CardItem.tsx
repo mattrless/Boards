@@ -1,13 +1,38 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { CardSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
+import { cn } from "@/lib/utils";
+import { useSortable } from "@dnd-kit/react/sortable";
 
-export default function CardItem({ item }: { item: CardSummaryResponseDto }) {
+export default function CardItem({
+  item,
+  index,
+  listId,
+}: {
+  item: CardSummaryResponseDto;
+  index: number;
+  listId: number;
+}) {
+  const { ref, isDragging } = useSortable({
+    id: `card-${item.id}`,
+    index,
+    type: "card",
+    accept: "card",
+    group: listId,
+  });
+
   return (
-    <Button
-      variant="outline"
-      className="w-full min-w-0 justify-start text-left"
+    <div
+      ref={ref}
+      role="button"
+      className={cn(
+        buttonVariants({ variant: "outline" }),
+        "w-full min-w-0 justify-start text-left cursor-pointer",
+        isDragging && "opacity-70",
+      )}
     >
-      <span className="block w-full truncate text-left">{item.title}</span>
-    </Button>
+      <span className="w-full truncate text-left">
+        {item.title + " " + item.id}
+      </span>
+    </div>
   );
 }

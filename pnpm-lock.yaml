@@ -173,6 +173,9 @@ importers:
 
   frontend:
     dependencies:
+      '@dnd-kit/abstract':
+        specifier: ^0.3.2
+        version: 0.3.2
       '@dnd-kit/react':
         specifier: ^0.3.2
         version: 0.3.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

@@ -285,6 +285,18 @@ export interface UpdateCardDto {
   description?: string;
 }
 
+export interface CardPositionUpdatedResponseDto {
+  id: number;
+  title: string;
+  description: string;
+  position: number;
+  list: ListSummaryResponseDto;
+  createdAt: string;
+  updatedAt: string;
+  /** Source list id before the move. */
+  sourceListId: number;
+}
+
 export interface AddCardMemberDto {
   /** User id to add to the card. */
   userId: number;
