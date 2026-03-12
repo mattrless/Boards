@@ -27,7 +27,6 @@ import CardItem from "../cards/CardItem";
 import CreateCardButton from "../cards/CreateCardButton";
 import { CollisionPriority } from "@dnd-kit/abstract";
 import { useCardsControllerFindAll } from "@/lib/api/generated/cards/cards";
-import { useDroppable } from "@dnd-kit/react";
 import EmptyListDroppable from "../cards/EmptyListDroppable";
 
 export default function ListCard({
@@ -123,7 +122,7 @@ export default function ListCard({
           ) : (
             <>
               <CardTitle className="line-clamp-1 leading-tight">
-                {list.title + "  " + list.id}
+                {list.title}
               </CardTitle>
               <CardAction>
                 {hasAllBoardPermissions(userBoardPermissions, [

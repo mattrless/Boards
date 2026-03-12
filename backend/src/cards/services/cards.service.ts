@@ -428,6 +428,7 @@ export class CardsService {
       const { updatedCard, sourceListId } = card;
       this.cardsEventsService.emitCardMoved(boardId, updatedCard.id, {
         boardId,
+        sourceListId,
         listId: updatedCard.list.id,
         cardId: updatedCard.id,
         data: {

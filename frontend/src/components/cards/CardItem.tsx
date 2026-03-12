@@ -30,9 +30,7 @@ export default function CardItem({
         isDragging && "opacity-70",
       )}
     >
-      <span className="w-full truncate text-left">
-        {item.title + " " + item.id}
-      </span>
+      <span className="w-full truncate text-left">{item.title}</span>
     </div>
   );
 }
