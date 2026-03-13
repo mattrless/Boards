@@ -51,7 +51,7 @@ export default function BoardSettingsDialog({
         </Tooltip>
       </TooltipProvider>
 
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{board.name} settings</DialogTitle>
         </DialogHeader>

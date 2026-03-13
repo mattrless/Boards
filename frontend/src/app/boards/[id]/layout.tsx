@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/generated/boards/boards";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
 import { useBoardsChangedSocket } from "@/hooks/boards/use-boards-changed-socket";
+import { useBoardMembersChangedSocket } from "@/hooks/boards/use-board-members-changed-socket";
 import { hasAnyBoardPermission } from "@/lib/auth/board-permissions";
 
 export default function BoardsLayout({
@@ -31,6 +32,7 @@ export default function BoardsLayout({
     currentBoardId: boardId,
     onBoardDeleted: handleBoardDeleted,
   });
+  useBoardMembersChangedSocket(boardId);
 
   if (boardQuery.data?.status === 404) {
     notFound();
