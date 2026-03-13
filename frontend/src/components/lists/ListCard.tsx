@@ -142,7 +142,7 @@ export default function ListCard({
           )}
         </CardHeader>
         <CardContent
-          className="scrollbar-hidden px-4 flex min-h-0 flex-col gap-2 overflow-y-auto"
+          className="scrollbar-hidden px-4 flex min-h-0 flex-col gap-0.5 overflow-y-auto"
           key={`cards-${list.id}-${cardItems.map((c) => c.id).join("-")}`}
         >
           {cardItems.length === 0 ? (
