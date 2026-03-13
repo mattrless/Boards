@@ -9,7 +9,13 @@ import {
 } from "@/lib/api/generated/boards/boards";
 import { getErrorMessageByStatus } from "@/lib/errors/api-error";
 
-export function useRemoveBoardMutation() {
+type UseRemoveBoardMutationParams = {
+  onSuccess?: () => void;
+};
+
+export function useRemoveBoardMutation({
+  onSuccess,
+}: UseRemoveBoardMutationParams = {}) {
   const queryClient = useQueryClient();
   const myBoardsQueryKey = getBoardsControllerFindMyBoardsQueryKey();
 
@@ -19,6 +25,7 @@ export function useRemoveBoardMutation() {
         if (res.status === 200) {
           toast.success("Board deleted.");
           queryClient.invalidateQueries({ queryKey: myBoardsQueryKey });
+          onSuccess?.();
           return;
         }
 

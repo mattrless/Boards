@@ -50,7 +50,7 @@ export default function EntityActions({
   const isBoards = entityLabel === "Board";
   const showRename = isBoards ? canRenameBoard : true;
   const showDelete = isBoards ? canDeleteBoard : true;
-  console.log(showDelete);
+
   function openDeleteDialog() {
     setIsDeleteDialogOpen(true);
   }

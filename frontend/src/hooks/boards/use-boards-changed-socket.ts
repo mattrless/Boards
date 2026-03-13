@@ -9,8 +9,16 @@ import {
 } from "@/lib/api/generated/boards/boards";
 import { BoardChangedEvent } from "@/lib/types/board-events";
 
-export function useBoardsChangedSocket() {
+type UseBoardsChangedSocketOptions = {
+  currentBoardId?: number;
+  onBoardDeleted?: (payload: BoardChangedEvent) => void;
+};
+
+export function useBoardsChangedSocket(options?: UseBoardsChangedSocketOptions) {
   const queryClient = useQueryClient();
+
+  const currentBoardId = options?.currentBoardId;
+  const onBoardDeleted = options?.onBoardDeleted;
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -34,6 +42,14 @@ export function useBoardsChangedSocket() {
           payload.boardId,
         ),
       });
+
+      if (
+        payload.reason === "board:deleted" &&
+        currentBoardId !== undefined &&
+        payload.boardId === currentBoardId
+      ) {
+        onBoardDeleted?.(payload);
+      }
     };
 
     socket.on("boards:changed", invalidateBoards);
@@ -43,5 +59,5 @@ export function useBoardsChangedSocket() {
       socket.off("boards:changed", invalidateBoards);
       socket.disconnect();
     };
-  }, [queryClient]);
+  }, [queryClient, currentBoardId, onBoardDeleted]);
 }

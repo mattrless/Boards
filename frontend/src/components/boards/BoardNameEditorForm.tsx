@@ -12,6 +12,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import updateBoardNameSchema, {
   type UpdateBoardNameSchema,
 } from "@/lib/schemas/boards/update-board-name.schema";
@@ -20,8 +21,10 @@ type BoardNameEditorFormProps = {
   initialName: string;
   isPending: boolean;
   submitError?: string | null;
-  onCancel: () => void;
+  onCancel?: () => void;
   onSubmitName: (name: string) => void;
+  layout?: "stack" | "inline";
+  showCancel?: boolean;
 };
 
 export default function BoardNameEditorForm({
@@ -30,6 +33,8 @@ export default function BoardNameEditorForm({
   submitError,
   onCancel,
   onSubmitName,
+  layout = "stack",
+  showCancel = true,
 }: BoardNameEditorFormProps) {
   const form = useForm<UpdateBoardNameSchema>({
     resolver: zodResolver(updateBoardNameSchema),
@@ -59,39 +64,74 @@ export default function BoardNameEditorForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                aria-invalid={fieldState.invalid}
-                maxLength={50}
-                disabled={isPending}
-                placeholder="My awesome board"
-                autoComplete="off"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {layout === "inline" ? (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      maxLength={50}
+                      disabled={isPending}
+                      placeholder="My awesome board"
+                      autoComplete="off"
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </div>
+                  <Button
+                    type="submit"
+                    className={cn("w-full", "sm:w-auto")}
+                    form="edit-board-name-form"
+                    disabled={isPending}
+                  >
+                    {isPending ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    maxLength={50}
+                    disabled={isPending}
+                    placeholder="My awesome board"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </>
+              )}
             </Field>
           )}
         />
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled={isPending}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="w-full"
-            form="edit-board-name-form"
-            disabled={isPending}
-          >
-            {isPending ? "Saving..." : "Save"}
-          </Button>
-        </div>
+        {layout === "stack" ? (
+          <div className={cn("grid gap-2", showCancel && "grid-cols-2")}>
+            {showCancel ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={isPending}
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              className="w-full"
+              form="edit-board-name-form"
+              disabled={isPending}
+            >
+              {isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        ) : null}
 
         {submitError ? <FieldError>{submitError}</FieldError> : null}
       </FieldGroup>

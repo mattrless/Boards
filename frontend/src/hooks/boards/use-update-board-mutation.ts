@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import {
   getBoardsControllerFindMyBoardsQueryKey,
+  getBoardsControllerFindOneQueryKey,
   useBoardsControllerUpdate,
 } from "@/lib/api/generated/boards/boards";
 import { getErrorMessageByStatus } from "@/lib/errors/api-error";
@@ -27,6 +28,9 @@ export function useUpdateBoardMutation({
         if (res.status === 200) {
           toast.success("Board renamed.");
           queryClient.invalidateQueries({ queryKey: myBoardsQueryKey });
+          queryClient.invalidateQueries({
+            queryKey: getBoardsControllerFindOneQueryKey(res.data.id),
+          });
           onSuccess?.();
           return;
         }

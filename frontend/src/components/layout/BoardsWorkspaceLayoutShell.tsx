@@ -12,12 +12,14 @@ type BoardsWorkspaceLayoutShellProps = {
   children: React.ReactNode;
   crumbs: Crumb[];
   requiredPermission: string;
+  boardActions?: React.ReactNode;
 };
 
 export default function BoardsWorkspaceLayoutShell({
   children,
   crumbs,
   requiredPermission,
+  boardActions,
 }: BoardsWorkspaceLayoutShellProps) {
   return (
     <ProtectedLayout
@@ -32,8 +34,9 @@ export default function BoardsWorkspaceLayoutShell({
               crumbs={crumbs}
               isLoggingOut={isLoggingOut}
               onLogout={logout}
+              boardActions={boardActions}
               actions={
-                <div>
+                <div className="flex items-center gap-2">
                   {hasPermission(user, "user_create") ? (
                     <Button asChild variant="secondary">
                       <Link href="/admin/users">Users</Link>
