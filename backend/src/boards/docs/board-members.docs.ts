@@ -1,6 +1,7 @@
 import { applyDecorators } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -17,7 +18,7 @@ export function ApiAddMemberDocs() {
       type: Number,
       description: "Target board id.",
     }),
-    ApiOkResponse({
+    ApiCreatedResponse({
       description: "Member added successfully",
       type: ActionResponseDto,
     }),

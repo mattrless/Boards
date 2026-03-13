@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import { BoardDetailsResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
 import GeneralBoardSettingsTab from "./GeneralBoardSettingsTab";
+import BoardMembersSettingsTab from "./BoardMembersSettingsTab";
 
 type BoardSettingsDialogProps = {
   board: BoardDetailsResponseDto;
@@ -65,7 +66,7 @@ export default function BoardSettingsDialog({
             <GeneralBoardSettingsTab board={board} />
           </TabsContent>
           <TabsContent value="tab-members">
-            <div className="text-sm text-muted-foreground">tab 2</div>
+            <BoardMembersSettingsTab board={board} />
           </TabsContent>
         </Tabs>
       </DialogContent>

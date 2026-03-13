@@ -35,9 +35,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Add member to board.
  */
-export type boardMembersControllerAddMemberResponse200 = {
+export type boardMembersControllerAddMemberResponse201 = {
   data: ActionResponseDto;
-  status: 200;
+  status: 201;
 };
 
 export type boardMembersControllerAddMemberResponse400 = {
@@ -66,7 +66,7 @@ export type boardMembersControllerAddMemberResponse409 = {
 };
 
 export type boardMembersControllerAddMemberResponseSuccess =
-  boardMembersControllerAddMemberResponse200 & {
+  boardMembersControllerAddMemberResponse201 & {
     headers: Headers;
   };
 export type boardMembersControllerAddMemberResponseError = (
