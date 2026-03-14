@@ -1,5 +1,3 @@
-import { BoardMyPermissionsResponseDto } from "../api/generated/boardsAPI.schemas";
-
 export function hasBoardPermission(
   permissions: string[] | undefined,
   boardPermission: string,

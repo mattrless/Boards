@@ -21,7 +21,7 @@ export function useUpdateCardMutation({
         if (res.status === 200) {
           toast.success("Card information updated");
 
-          // websockets invalidates but just in case
+          // websockets already invalidates but just in case
           queryClient.invalidateQueries({
             queryKey: getCardsControllerFindAllQueryKey(boardId, listId),
           });
