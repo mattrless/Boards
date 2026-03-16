@@ -42,6 +42,34 @@ export default function LoginForm() {
     });
   }
 
+  function onGuestLogin() {
+    const password = process.env.NEXT_PUBLIC_GUEST_PASSWORD!;
+    const email = process.env.NEXT_PUBLIC_GUEST_EMAIL!;
+
+    const data: LoginSchema = {
+      email,
+      password,
+    };
+
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        loginMutation.mutate(
+          {
+            email: data.email,
+            password: data.password,
+          },
+          {
+            onSuccess: () => {
+              queryClient.removeQueries({ queryKey: ["auth", "me"] });
+              toast.success("Wellcome!");
+              router.push("/boards");
+            },
+          },
+        );
+      },
+    });
+  }
+
   return (
     <form
       id="login-form"
@@ -87,17 +115,30 @@ export default function LoginForm() {
           )}
         />
 
-        <Button
-          type="submit"
-          className="w-full"
-          form="login-form"
-          disabled={loginMutation.isPending}
-        >
-          {loginMutation.isPending ? "Logging in..." : "Login"}
-        </Button>
-        {loginMutation.isError && (
-          <FieldError>{getAuthApiErrorMessage(loginMutation.error)}</FieldError>
-        )}
+        <div className="flex flex-col gap-2">
+          <Button
+            type="submit"
+            className="w-full"
+            form="login-form"
+            disabled={loginMutation.isPending}
+          >
+            {loginMutation.isPending ? "Logging in..." : "Login"}
+          </Button>
+          <Button
+            type="button"
+            className="w-full"
+            disabled={loginMutation.isPending}
+            variant={"outline"}
+            onClick={onGuestLogin}
+          >
+            {loginMutation.isPending ? "Logging in..." : "Enter as a guest"}
+          </Button>
+          {loginMutation.isError && (
+            <FieldError>
+              {getAuthApiErrorMessage(loginMutation.error)}
+            </FieldError>
+          )}
+        </div>
       </FieldGroup>
     </form>
   );
