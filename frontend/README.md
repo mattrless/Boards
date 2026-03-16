@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Boards Frontend
 
-## Getting Started
+Next.js app for the Boards Backend. Uses React Query, Socket.IO, and an Orval-generated API client that targets the backend Swagger.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js 16 + React 19
+- Tailwind CSS 4
+- React Query
+- Socket.IO client
+- Orval (OpenAPI client generation)
+- shadcn/ui components
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `src/app`: App Router pages (auth, boards, admin)
+- `src/components`: UI and feature components
+- `src/hooks`: React Query + socket hooks
+- `src/lib/api/generated`: Orval-generated API clients
+- `src/lib/api/custom-fetch.ts`: Custom API fetch wrapper
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+- Install: `pnpm -C frontend install`
+- Dev server: `pnpm -C frontend dev`
+- Build: `pnpm -C frontend build`
+- Generate API client (Orval): `pnpm -C frontend api:generate`
 
-To learn more about Next.js, take a look at the following resources:
+## Orval
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Config: `frontend/orval.config.ts`
+- Output: `frontend/src/lib/api/generated`
+- OpenAPI source: `ORVAL_OPENAPI_URL` (defaults to backend Swagger JSON)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- API routes under `src/app/api/nest/[...path]/route.ts` proxy to the backend.
+- WebSocket events are consumed via Socket.IO hooks in `src/hooks`.
