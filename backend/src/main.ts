@@ -34,19 +34,24 @@ async function bootstrap() {
     jsonDocumentUrl: "swagger/json",
   });
 
-  const asyncApiOptions = new AsyncApiDocumentBuilder()
-    .setTitle("Boards Realtime API")
-    .setDescription("WebSocket events for boards, lists, and cards.")
-    .setVersion("1.0")
-    .setDefaultContentType("application/json")
-    .addServer("boards-ws", {
-      url: `ws://${process.env.HOST ?? "localhost:3000"}`,
-      protocol: "socket.io",
-    })
-    .build();
+  if (process.env.NODE_ENV !== "production") {
+    const asyncApiOptions = new AsyncApiDocumentBuilder()
+      .setTitle("Boards Realtime API")
+      .setDescription("WebSocket events for boards, lists, and cards.")
+      .setVersion("1.0")
+      .setDefaultContentType("application/json")
+      .addServer("boards-ws", {
+        url: `ws://${process.env.HOST ?? "localhost:3000"}`,
+        protocol: "socket.io",
+      })
+      .build();
 
-  const asyncApiDocument = AsyncApiModule.createDocument(app, asyncApiOptions);
-  await AsyncApiModule.setup("ws-docs", app, asyncApiDocument);
+    const asyncApiDocument = AsyncApiModule.createDocument(
+      app,
+      asyncApiOptions,
+    );
+    await AsyncApiModule.setup("ws-docs", app, asyncApiDocument);
+  }
 
   app.use(helmet());
   app.enableCors({
