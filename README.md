@@ -3,6 +3,7 @@
 Boards is a Trello‑style app for creating boards, lists, and cards. Each board has lists, cards, admin and member roles; you can add users to your boards, promote them to admin or demote them to member. Cards can have assigned members. Admins can drag and reorder lists and cards, while members can only drag and reorder cards.
 
 ![demo](./git-assets/demo.gif)
+
 [Backend](./backend/README.md)
 [Frontend](./frontend/README.md)
 
