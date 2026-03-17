@@ -40,7 +40,7 @@ async function bootstrap() {
     .setVersion("1.0")
     .setDefaultContentType("application/json")
     .addServer("boards-ws", {
-      url: "ws://localhost:3000",
+      url: `ws://${process.env.HOST ?? "localhost:3000"}`,
       protocol: "socket.io",
     })
     .build();
