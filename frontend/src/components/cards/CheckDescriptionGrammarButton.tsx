@@ -1,3 +1,5 @@
+"use client";
+
 import { SpellCheck } from "lucide-react";
 
 import { Button } from "../ui/button";

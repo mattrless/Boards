@@ -1,3 +1,5 @@
+"use client";
+
 import { DragDropProvider } from "@dnd-kit/react";
 import ListCard from "./ListCard";
 import {

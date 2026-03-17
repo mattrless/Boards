@@ -17,8 +17,6 @@ services:
       - postgres
     env_file:
       - ./backend/.env
-    environment:
-      NODE_ENV: development
     command: sleep infinity
 
   postgres:

@@ -1,3 +1,5 @@
+"use client";
+
 import { useSortable } from "@dnd-kit/react/sortable";
 
 export default function EmptyListDroppable({ listId }: { listId: number }) {

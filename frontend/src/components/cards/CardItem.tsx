@@ -1,3 +1,5 @@
+"use client";
+
 import { buttonVariants } from "@/components/ui/button";
 import { CardSummaryResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
 import { cn } from "@/lib/utils";

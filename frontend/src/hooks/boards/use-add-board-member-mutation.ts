@@ -1,3 +1,5 @@
+"use client";
+
 import { getBoardMembersControllerFindBoardMembersQueryKey } from "./../../lib/api/generated/board-members/board-members";
 
 import { useQueryClient } from "@tanstack/react-query";
