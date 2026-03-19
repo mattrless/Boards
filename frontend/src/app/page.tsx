@@ -1,6 +1,7 @@
 "use client";
 
 import AuthForm from "@/components/auth/AuthForm";
+import AuthPageSkeleton from "@/components/skeletons/AuthPageSkeleton";
 import { LayoutDashboard } from "lucide-react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -27,7 +28,7 @@ export default function Home() {
     return (
       <main className="min-h-screen bg-muted/30 px-4 py-8">
         <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
-          <p className="text-sm text-muted-foreground">Checking session...</p>
+          <AuthPageSkeleton />
         </section>
       </main>
     );

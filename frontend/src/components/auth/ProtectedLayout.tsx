@@ -9,6 +9,7 @@ import { useLogoutMutation } from "@/hooks/auth/use-logout-mutation";
 import { hasPermission } from "@/lib/auth/permissions";
 import type { UserResponseDto } from "@/lib/api/generated/boardsAPI.schemas";
 import { isHttpStatusError } from "@/lib/errors/http-status-error";
+import ProtectedLayoutSkeleton from "@/components/skeletons/ProtectedLayoutSkeleton";
 
 type ProtectedLayoutRenderProps = {
   user: UserResponseDto;
@@ -58,7 +59,7 @@ export default function ProtectedLayout({
   }
 
   if (meQuery.isPending) {
-    return <p className="p-6">Checking session...</p>;
+    return <ProtectedLayoutSkeleton />;
   }
 
   if (meQuery.isError) {

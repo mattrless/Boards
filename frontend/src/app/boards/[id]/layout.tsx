@@ -4,6 +4,8 @@ import { useCallback } from "react";
 import { notFound, useRouter } from "next/navigation";
 import BoardsWorkspaceLayoutShell from "@/components/layout/BoardsWorkspaceLayoutShell";
 import BoardSettingsDialog from "@/components/boards/BoardSettingsDialog";
+import BoardLayoutSkeleton from "@/components/skeletons/BoardLayoutSkeleton";
+import BoardPageSkeleton from "@/components/skeletons/BoardPageSkeleton";
 import { Crumb } from "@/lib/types/Crumb";
 import {
   useBoardsControllerFindMyBoardPermissions,
@@ -23,6 +25,7 @@ export default function BoardsLayout({
   const router = useRouter();
   const boardQuery = useBoardsControllerFindOne(boardId);
   const permissionsQuery = useBoardsControllerFindMyBoardPermissions(boardId);
+  const isBoardLayoutPending = boardQuery.isPending || permissionsQuery.isPending;
 
   const handleBoardDeleted = useCallback(() => {
     router.replace("/boards");
@@ -38,12 +41,8 @@ export default function BoardsLayout({
     notFound();
   }
 
-  let boardName = "Board";
-  if (boardQuery.isPending) {
-    boardName = "Loading...";
-  } else if (boardQuery.data?.status === 200) {
-    boardName = boardQuery.data.data.name;
-  }
+  const boardName =
+    boardQuery.data?.status === 200 ? boardQuery.data.data.name : "Board";
 
   const board = boardQuery.data?.data;
 
@@ -65,8 +64,11 @@ export default function BoardsLayout({
     "board_update_member_role",
   ]);
 
-  const boardActions =
-    canSeeSettings && board ? <BoardSettingsDialog board={board} /> : null;
+  const boardActions = isBoardLayoutPending
+    ? <BoardLayoutSkeleton />
+    : canSeeSettings && board
+      ? <BoardSettingsDialog board={board} />
+      : null;
 
   return (
     <BoardsWorkspaceLayoutShell
@@ -74,7 +76,7 @@ export default function BoardsLayout({
       crumbs={crumbs}
       boardActions={boardActions}
     >
-      {children}
+      {isBoardLayoutPending ? <BoardPageSkeleton /> : children}
     </BoardsWorkspaceLayoutShell>
   );
 }

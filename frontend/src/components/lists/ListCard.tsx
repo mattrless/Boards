@@ -30,6 +30,7 @@ import CreateCardButton from "../cards/CreateCardButton";
 import { CollisionPriority } from "@dnd-kit/abstract";
 import { useCardsControllerFindAll } from "@/lib/api/generated/cards/cards";
 import EmptyListDroppable from "../cards/EmptyListDroppable";
+import ListCardSkeleton from "@/components/skeletons/ListCardSkeleton";
 
 export default function ListCard({
   list,
@@ -72,9 +73,10 @@ export default function ListCard({
     collisionPriority: CollisionPriority.Low,
   });
 
-  const { data } = useCardsControllerFindAll(boardId, list.id);
-  if (data?.status !== 200) return <div>Error</div>;
-  const cardItems: CardSummaryResponseDto[] = data?.data;
+  const { data, isPending } = useCardsControllerFindAll(boardId, list.id);
+  if (isPending || data == null) return <ListCardSkeleton />;
+  if (data.status !== 200) return <ListCardSkeleton />;
+  const cardItems: CardSummaryResponseDto[] = data.data;
 
   function handleDelete() {
     removeListMutation.mutate({ boardId, listId: list.id });

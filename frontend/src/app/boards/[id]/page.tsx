@@ -1,6 +1,7 @@
 "use client";
 
 import ListGrid from "@/components/lists/ListGrid";
+import BoardPageSkeleton from "@/components/skeletons/BoardPageSkeleton";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
 import { useCardsChangedSocket } from "@/hooks/cards/use-cards-changed-socket";
 import { useListsChangedSocket } from "@/hooks/lists/use-lists-changed-socket";
@@ -14,8 +15,8 @@ export default function BoardPage() {
   useListsChangedSocket(boardId);
   useCardsChangedSocket(boardId);
 
-  if (isPending) return <div>Loading...</div>;
-  if (data?.status !== 200) return <div>Error</div>;
+  if (isPending || !data) return <BoardPageSkeleton />;
+  if (data.status !== 200) return <BoardPageSkeleton />;
 
   const lists: ListSummaryResponseDto[] = data.data;
 
