@@ -28,9 +28,12 @@ export function useListsChangedSocket(boardId: number) {
       }
       socket = s;
 
-      socket.on("connect", () => {
+      const joinBoardRoom = () => {
         socket.emit("board:join", { boardId });
-      });
+      };
+
+      socket.on("connect", joinBoardRoom);
+      if (socket.connected) joinBoardRoom();
 
       socket.on("list:created", refresh);
       socket.on("list:deleted", refresh);

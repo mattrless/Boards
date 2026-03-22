@@ -131,7 +131,7 @@ export default function LoginForm() {
             variant={"outline"}
             onClick={onGuestLogin}
           >
-            {loginMutation.isPending ? "Logging in..." : "Enter as a guest"}
+            {loginMutation.isPending ? "Logging in..." : "Try Demo"}
           </Button>
           {loginMutation.isError && (
             <FieldError>

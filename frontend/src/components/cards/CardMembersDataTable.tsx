@@ -47,8 +47,14 @@ export default function CardMembersDataTable({
     cardId,
   );
 
-  const cardMembers: CardMemberResponseDto[] =
-    cardMembersQuery.data?.data ?? [];
+  const rawCardMembers = cardMembersQuery.data?.status === 200
+    ? cardMembersQuery.data.data
+    : [];
+
+  const cardMembers: CardMemberResponseDto[] = Array.isArray(rawCardMembers)
+    ? rawCardMembers
+    : [];
+
   const isCurrentUserMember =
     !!currentUserId &&
     cardMembers.some((member) => member.user.id === currentUserId);

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import CardMembersDataTable from "./CardMembersDataTable";
 import { useBoardsControllerFindMyBoardPermissions } from "@/lib/api/generated/boards/boards";
 import { useBoardIdParam } from "@/hooks/boards/use-board-id-param";
 import { useCardMembersSocket } from "@/hooks/cards/use-card-members-socket";
+import { hasBoardPermission } from "@/lib/auth/board-permissions";
+import DeleteCardButton from "./DeleteCardButton";
 
 type CardItemDialogProps = {
   card: CardSummaryResponseDto;
@@ -34,12 +36,15 @@ export default function CardItemDialog({
       : undefined;
 
   const userBoardRole = userBoardInfo?.boardRole;
+  const userBoardPermissions = userBoardInfo?.permissions;
   const canRemoveMembers = userBoardRole !== "member";
 
-  useCardMembersSocket(boardId, card.id);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useCardMembersSocket(boardId, card.id, isOpen);
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogTitle></DialogTitle>
       <DialogContent className="sm:max-w-4xl">
@@ -58,6 +63,15 @@ export default function CardItemDialog({
             />
           </div>
         </div>
+        {hasBoardPermission(userBoardPermissions, "card_delete") ? (
+          <div className="mt-4 flex justify-end">
+            <DeleteCardButton
+              cardId={card.id}
+              listId={listId}
+              // onSuccess={() => setIsOpen(false)}
+            />
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

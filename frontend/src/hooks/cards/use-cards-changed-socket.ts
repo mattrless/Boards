@@ -58,9 +58,12 @@ export function useCardsChangedSocket(boardId: number) {
       }
       socket = s;
 
-      socket.on("connect", () => {
+      const joinBoardRoom = () => {
         socket.emit("board:join", { boardId });
-      });
+      };
+
+      socket.on("connect", joinBoardRoom);
+      if (socket.connected) joinBoardRoom();
 
       socket.on("card:moved", handleCardMoved);
       socket.on("card:created", handleCardCreated);
