@@ -8,11 +8,14 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   }),
 });
 
 async function main() {
+  const defaultPassword =
+    "$2b$10$KHNywjOQ/our6pDpAsYiT.nmPRO1avFQ5s/dOmKACqkGw4ZD3B/2S";
+
   // SYSTEM ROLES
   await prisma.systemRole.createMany({
     data: [{ name: "admin" }, { name: "user" }],
@@ -194,18 +197,26 @@ async function main() {
   });
 
   // ADMIN USER
-  const adminProfile = await prisma.profile.create({
-    data: { name: "Admin", avatar: null },
-  });
-
   await prisma.user.upsert({
     where: { email: "admin@boards.com" },
-    update: {},
+    update: {
+      password: defaultPassword,
+      systemRole: {
+        connect: { id: adminRole.id },
+      },
+      profile: {
+        update: { name: "Admin", avatar: null },
+      },
+    },
     create: {
       email: "admin@boards.com",
-      password: "$2b$10$Eym48W8JIdwlbpN4Q/a6N.7fSaigBZ7rpxQsSYN5X8uiGPhcPs7y2",
-      profileId: adminProfile.id,
-      systemRoleId: adminRole.id,
+      password: defaultPassword,
+      systemRole: {
+        connect: { id: adminRole.id },
+      },
+      profile: {
+        create: { name: "Admin", avatar: null },
+      },
     },
   });
 
@@ -240,17 +251,26 @@ async function main() {
   const createdUsers: User[] = [];
 
   for (const u of usersData) {
-    const profile = await prisma.profile.create({
-      data: { name: u.name, avatar: u.avatar },
-    });
-
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        password: defaultPassword,
+        systemRole: {
+          connect: { id: userRole.id },
+        },
+        profile: {
+          update: { name: u.name, avatar: u.avatar },
+        },
+      },
+      create: {
         email: u.email,
-        password:
-          "$2b$10$KHNywjOQ/our6pDpAsYiT.nmPRO1avFQ5s/dOmKACqkGw4ZD3B/2S",
-        profileId: profile.id,
-        systemRoleId: userRole.id,
+        password: defaultPassword,
+        systemRole: {
+          connect: { id: userRole.id },
+        },
+        profile: {
+          create: { name: u.name, avatar: u.avatar },
+        },
       },
     });
 
